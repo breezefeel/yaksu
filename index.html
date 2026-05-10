@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>리:얼 Movement 회원 신청서</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<style>
+:root {
+  --teal:      #00b09b;
+  --teal-dark: #008f7d;
+  --teal-lt:   #e0f5f2;
+  --green:     #96c93d;
+  --text:      #1a1a1a;
+  --muted:     #6b7280;
+  --border:    #e2e8f0;
+  --bg:        #f7faf9;
+  --white:     #ffffff;
+  --danger:    #ef4444;
+  --shadow:    0 4px 24px rgba(0,176,155,0.10);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: linear-gradient(145deg, #00b09b 0%, #96c93d 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px 16px 48px;
+}
+
+/* ── 카드 ─────────────────────────────── */
+.wrap { width: 100%; max-width: 560px; }
+
+.brand {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.brand-logo {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -1px;
+}
+.brand-logo span { color: rgba(255,255,255,0.6); font-weight: 400; font-size: 20px; margin-left: 4px; }
+.brand-sub { color: rgba(255,255,255,0.85); font-size: 11px; margin-top: 6px; letter-spacing: 0.04em; line-height: 1.35; font-weight: 500; }
+
+.card {
+  background: var(--white);
+  border-radius: 24px;
+  padding: 36px 32px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  display: none;
+  animation: fadeUp .4s ease both;
+}
+.card.active { display: block; }
+
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(16px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* ── 진행 표시 ───────────────────────── */
+.progress-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 32px;
+}
+.step-dot {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700;
+  background: var(--border);
+  color: var(--muted);
+  transition: all .3s;
+  position: relative;
+  z-index: 1;
+}
+.step-dot.active  { background: var(--teal); color: #fff; box-shadow: 0 0 0 4px var(--teal-lt); }
+.step-dot.done    { background: var(--green); color: #fff; }
+.step-line {
+  flex: 1; height: 2px;
+  background: var(--border);
+  max-width: 60px;
+  transition: background .3s;
+}
+.step-line.done { background: var(--green); }
+
+/* ── 섹션 타이틀 ─────────────────────── */
+.section-title {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.section-sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+
+/* ── 폼 요소 ─────────────────────────── */
+.form-group { margin-bottom: 20px; }
+.form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+  letter-spacing: .3px;
+}
+.form-label .req { color: var(--teal); margin-left: 2px; }
+
+.form-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  font-size: 16px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--bg);
+  transition: all .2s;
+  -webkit-appearance: none;
+}
+.form-input:focus {
+  outline: none;
+  border-color: var(--teal);
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgba(0,176,155,0.12);
+}
+.form-input::placeholder { color: #b0bec5; }
+
+.phone-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.phone-part { flex: 1; min-width: 0; }
+.phone-part.phone-prefix-wrap {
+  flex: 0 0 88px;
+}
+.phone-part .form-input {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.phone-prefix-input {
+  background: var(--border) !important;
+  color: var(--muted) !important;
+  cursor: default;
+  font-weight: 600;
+}
+
+/* ── 선택 카드 (요일, 결제 등) ──────── */
+.choice-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.choice-grid.col3 { grid-template-columns: repeat(3, 1fr); }
+.choice-grid.col2 { grid-template-columns: repeat(2, 1fr); }
+
+.choice-item input { display: none; }
+.choice-item label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 8px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all .2s;
+  background: var(--bg);
+  text-align: center;
+  min-height: 56px;
+}
+.choice-item label:hover { border-color: var(--teal); background: var(--teal-lt); }
+.choice-item input:checked + label {
+  background: linear-gradient(135deg, var(--teal), var(--green));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0,176,155,0.3);
+}
+.choice-item label .ch-main {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.choice-item label .ch-sub {
+  font-size: 11px;
+  opacity: .75;
+  margin-top: 3px;
+  line-height: 1.3;
+}
+
+/* 결제 옵션 */
+.pay-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pay-item input { display: none; }
+.pay-item label {
+  display: block;
+  padding: 20px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all .2s;
+  background: var(--bg);
+}
+.pay-item label:hover { border-color: var(--teal); }
+.pay-item input:checked + label {
+  background: linear-gradient(135deg, var(--teal), var(--green));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(0,176,155,0.3);
+}
+.pay-name { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+.pay-price { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.pay-desc { font-size: 12px; opacity: .7; }
+.pay-badge {
+  display: inline-block;
+  background: rgba(255,255,255,0.25);
+  border-radius: 20px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.pay-item input:not(:checked) + label .pay-badge {
+  background: var(--teal);
+  color: #fff;
+}
+
+/* 주간 선택 */
+.week-select {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2300b09b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  cursor: pointer;
+  transition: all .2s;
+}
+.week-select:focus {
+  outline: none;
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(0,176,155,0.12);
+}
+
+/* 시간 그리드 - 요일별 동적 생성 */
+.time-section { display: none; }
+.time-section.visible { display: block; }
+.time-day-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--teal);
+  margin: 16px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.time-day-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.time-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.time-item input { display: none; }
+.time-item label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 4px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all .2s;
+  background: var(--bg);
+}
+.time-item label:hover { border-color: var(--teal); }
+.time-item input:checked + label {
+  background: linear-gradient(135deg, var(--teal), var(--green));
+  border-color: transparent;
+  color: #fff;
+  font-weight: 700;
+}
+
+/* 강사 선택 */
+.instructor-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.inst-item input { display: none; }
+.inst-item label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 8px;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all .2s;
+  background: var(--bg);
+  text-align: center;
+}
+.inst-item label:hover { border-color: var(--teal); background: var(--teal-lt); }
+.inst-item input:checked + label {
+  background: linear-gradient(135deg, var(--teal), var(--green));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0,176,155,0.3);
+}
+.inst-icon { font-size: 24px; margin-bottom: 6px; }
+.inst-name { font-size: 14px; font-weight: 700; }
+
+/* ── 약관 ────────────────────────────── */
+.terms-box {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  max-height: 300px;
+  overflow-y: auto;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--muted);
+  margin-bottom: 12px;
+  transition: all 0.5s ease;
+}
+.terms-box.collapsed {
+  max-height: 100px;
+  overflow: hidden;
+}
+.terms-box h4 { color: var(--text); font-size: 13px; margin: 0 0 8px; }
+.terms-box ol { padding-left: 16px; }
+.terms-box li { margin-bottom: 6px; }
+
+.privacy-box {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  max-height: 0;
+  overflow: hidden;
+  margin-bottom: 12px;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--muted);
+  transition: all 0.5s ease;
+  opacity: 0;
+}
+.privacy-box h4 { color: var(--text); font-size: 13px; margin: 0 0 10px; }
+.privacy-box p { margin: 0 0 6px; color: var(--text); }
+.privacy-box p strong { color: var(--text); }
+.privacy-box.expanded {
+  max-height: 520px;
+  opacity: 1;
+  overflow-y: auto;
+}
+.privacy-box.collapsed {
+  max-height: 100px;
+  opacity: 1;
+  overflow: hidden;
+}
+
+.agree-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  margin-bottom: 8px;
+  transition: all .2s;
+  background: var(--bg);
+}
+.agree-row.checked { border-color: var(--teal); background: var(--teal-lt); }
+.agree-row input[type="checkbox"] {
+  width: 20px; height: 20px;
+  accent-color: var(--teal);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.agree-row span {
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  flex: 1;
+  line-height: 1.45;
+}
+
+/* 서명 */
+.sig-wrap {
+  border: 1.5px dashed var(--teal);
+  border-radius: 12px;
+  background: var(--teal-lt);
+  margin-bottom: 10px;
+  position: relative;
+  overflow: hidden;
+}
+.sig-canvas {
+  display: block;
+  width: 100%;
+  height: 180px;
+  touch-action: none;
+  cursor: crosshair;
+  position: relative;
+  z-index: 2;
+}
+.sig-hint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 13px;
+  color: var(--teal);
+  opacity: .6;
+  pointer-events: none;
+  font-weight: 500;
+}
+.sig-clear {
+  width: 100%;
+  padding: 10px;
+  background: #f0f0f0;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--muted);
+  transition: background .2s;
+}
+.sig-clear:hover { background: #e0e0e0; }
+
+.sig-help {
+  font-size: 13px;
+  color: var(--teal);
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+#agree2Group { margin-bottom: 0; }
+
+/* ── 버튼 ─────────────────────────────── */
+.btn-row { display: flex; gap: 10px; margin-top: 28px; }
+.btn {
+  flex: 1;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s;
+  font-family: inherit;
+}
+.btn-prev { background: var(--border); color: var(--muted); }
+.btn-prev:hover { background: #d1d5db; }
+.btn-next {
+  background: linear-gradient(135deg, var(--teal), var(--green));
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(0,176,155,0.3);
+}
+.btn-next:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,176,155,0.4); }
+.btn-next:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+/* ── 로딩 ────────────────────────────── */
+.loading-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.75);
+  display: none; align-items: center; justify-content: center;
+  z-index: 9999;
+}
+.loading-overlay.active { display: flex; }
+.loading-box {
+  background: var(--white);
+  border-radius: 20px;
+  padding: 36px 40px;
+  text-align: center;
+  max-width: 320px;
+  width: 90%;
+}
+.spinner {
+  width: 48px; height: 48px;
+  border: 4px solid var(--border);
+  border-top-color: var(--teal);
+  border-radius: 50%;
+  animation: spin .9s linear infinite;
+  margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 15px; color: var(--muted); font-weight: 500; }
+
+/* ── 완료 화면 ──────────────────────── */
+.success-card {
+  background: var(--white);
+  border-radius: 24px;
+  padding: 48px 32px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  text-align: center;
+  display: none;
+  animation: fadeUp .4s ease both;
+}
+.success-card.active { display: block; }
+.success-icon { font-size: 56px; margin-bottom: 16px; }
+.success-title {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+.success-msg { font-size: 15px; color: var(--muted); line-height: 1.7; margin-bottom: 28px; }
+.summary-box {
+  background: var(--teal-lt);
+  border-radius: 14px;
+  padding: 20px;
+  text-align: left;
+  margin-bottom: 24px;
+}
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(0,176,155,.15);
+}
+.summary-row:last-child { border-bottom: none; }
+.summary-row .s-label { color: var(--muted); }
+.summary-row .s-val { font-weight: 700; color: var(--text); }
+.btn-drive {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--teal), var(--green));
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all .2s;
+}
+.btn-drive:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,176,155,.35); }
+
+/* A4 캡처용 숨김 문서 */
+.a4-doc {
+  position: absolute;
+  left: -9999px; top: 0;
+  width: 794px;
+  padding: 40px 48px;
+  background: white;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.a4-title { text-align: center; font-size: 20px; font-weight: 700; margin-bottom: 24px; }
+.a4-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+.a4-table td { border: 1px solid #333; padding: 8px 12px; }
+.a4-table .lbl { background: #f0f0f0; font-weight: 700; width: 120px; }
+.a4-section { border: 1px solid #333; padding: 12px; margin-bottom: 12px; font-size: 11px; }
+.a4-section h3 { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+.a4-sig { display: inline-block; width: 140px; border-bottom: 1px solid #333; height: 36px; vertical-align: middle; position: relative; }
+.a4-sig img { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); height: 32px; max-width: 130px; object-fit: contain; }
+
+/* 모바일 */
+@media (max-width: 480px) {
+  .card { padding: 28px 20px; }
+  .choice-grid { grid-template-columns: repeat(3, 1fr); }
+  .time-grid { grid-template-columns: repeat(3, 1fr); }
+  .pay-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <!-- 브랜드 헤더 -->
+  <div class="brand">
+    <div class="brand-logo">리:얼<span>Movement</span></div>
+    <div class="brand-sub">Re-Alignment Movement Center</div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PAGE 1 — 이름 / 연락처
+  ══════════════════════════════════ -->
+  <div class="card active" id="page1">
+    <div class="progress-bar">
+      <div class="step-dot active" id="dot1">1</div>
+      <div class="step-line" id="line1"></div>
+      <div class="step-dot" id="dot2">2</div>
+      <div class="step-line" id="line2"></div>
+      <div class="step-dot" id="dot3">3</div>
+    </div>
+
+    <div class="section-title">기본 정보</div>
+    <div class="section-sub">회원님의 이름과 연락처를 입력해주세요.</div>
+
+    <div class="form-group">
+      <label class="form-label">이름 <span class="req">*</span></label>
+      <input class="form-input" type="text" id="name" placeholder="홍길동" autocomplete="name">
+    </div>
+    <div class="form-group">
+      <label class="form-label">연락처 <span class="req">*</span></label>
+      <div class="phone-row" role="group" aria-label="휴대폰 번호">
+        <div class="phone-part phone-prefix-wrap">
+          <input class="form-input phone-prefix-input" type="tel" id="phone-prefix" value="010" readonly tabindex="-1" title="앞자리 010" aria-label="010 고정">
+        </div>
+        <div class="phone-part">
+          <input class="form-input" type="tel" id="phone-mid" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="1234" autocomplete="tel" aria-label="연락처 가운데 네 자리">
+        </div>
+        <div class="phone-part">
+          <input class="form-input" type="tel" id="phone-last" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="1234" autocomplete="tel" aria-label="연락처 마지막 네 자리">
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-next" onclick="goPage(2)">다음 →</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PAGE 2 — 일정 / 결제
+  ══════════════════════════════════ -->
+  <div class="card" id="page2">
+    <div class="progress-bar">
+      <div class="step-dot done" id="dot1b">✓</div>
+      <div class="step-line done" id="line1b"></div>
+      <div class="step-dot active" id="dot2b">2</div>
+      <div class="step-line" id="line2b"></div>
+      <div class="step-dot" id="dot3b">3</div>
+    </div>
+
+    <div class="section-title">일정 선택</div>
+    <div class="section-sub">관리 시작 주간, 요일, 시간을 선택해주세요.</div>
+
+    <!-- 시작 주간 -->
+    <div class="form-group">
+      <label class="form-label">첫 시작 주간 선택 <span class="req">*</span></label>
+      <select class="week-select" id="startWeek" onchange="updateWeekDates()">
+        <option value="">선택하세요</option>
+      </select>
+    </div>
+
+    <!-- 담당 강사 -->
+    <div class="form-group">
+      <label class="form-label">담당 강사 <span class="req">*</span></label>
+      <div class="instructor-grid" id="instructorGrid">
+        <div class="inst-item">
+          <input type="radio" name="instructor" id="inst1" value="강사1">
+          <label for="inst1">
+            <div class="inst-icon">👤</div>
+            <div class="inst-name">강사 1</div>
+          </label>
+        </div>
+        <div class="inst-item">
+          <input type="radio" name="instructor" id="inst2" value="강사2">
+          <label for="inst2">
+            <div class="inst-icon">👤</div>
+            <div class="inst-name">강사 2</div>
+          </label>
+        </div>
+        <div class="inst-item">
+          <input type="radio" name="instructor" id="inst3" value="강사3">
+          <label for="inst3">
+            <div class="inst-icon">👤</div>
+            <div class="inst-name">강사 3</div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 관리 요일 -->
+    <div class="form-group">
+      <label class="form-label">관리 요일 <span class="req">*</span> <small style="color:var(--muted);font-weight:400;">(복수 선택 가능)</small></label>
+      <div class="choice-grid" id="dayGrid">
+        <div class="choice-item">
+          <input type="checkbox" id="d1" value="월" onchange="buildTimePickers()">
+          <label for="d1"><span class="ch-main">월</span></label>
+        </div>
+        <div class="choice-item">
+          <input type="checkbox" id="d2" value="화" onchange="buildTimePickers()">
+          <label for="d2"><span class="ch-main">화</span></label>
+        </div>
+        <div class="choice-item">
+          <input type="checkbox" id="d3" value="수" onchange="buildTimePickers()">
+          <label for="d3"><span class="ch-main">수</span></label>
+        </div>
+        <div class="choice-item">
+          <input type="checkbox" id="d4" value="목" onchange="buildTimePickers()">
+          <label for="d4"><span class="ch-main">목</span></label>
+        </div>
+        <div class="choice-item">
+          <input type="checkbox" id="d5" value="금" onchange="buildTimePickers()">
+          <label for="d5"><span class="ch-main">금</span></label>
+        </div>
+        <div class="choice-item">
+          <input type="checkbox" id="d6" value="토" onchange="buildTimePickers()">
+          <label for="d6"><span class="ch-main">토</span></label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 요일별 시간 (동적 생성) -->
+    <div class="form-group" id="timeSection" style="display:none;">
+      <label class="form-label">관리 시간 <span class="req">*</span></label>
+      <div id="timePickersWrap"></div>
+    </div>
+
+    <!-- 결제 -->
+    <div class="form-group">
+      <label class="form-label">이용권 선택 <span class="req">*</span></label>
+      <div class="pay-grid">
+        <div class="pay-item">
+          <input type="radio" name="payment" id="pay1" value="1회|10000">
+          <label for="pay1">
+            <div class="pay-name">1회 이용권</div>
+            <div class="pay-price">10,000원</div>
+            <div class="pay-desc">단건 이용</div>
+          </label>
+        </div>
+        <div class="pay-item">
+          <input type="radio" name="payment" id="pay2" value="10회|850000">
+          <label for="pay2">
+            <span class="pay-badge">추천 · 15% 할인</span>
+            <div class="pay-name">10회 이용권</div>
+            <div class="pay-price">850,000원</div>
+            <div class="pay-desc">회당 85,000원</div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-prev" onclick="goPage(1)">← 이전</button>
+      <button class="btn btn-next" onclick="goPage(3)">다음 →</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PAGE 3 — 약관 / 서명
+  ══════════════════════════════════ -->
+  <div class="card" id="page3">
+    <div class="progress-bar">
+      <div class="step-dot done">✓</div>
+      <div class="step-line done"></div>
+      <div class="step-dot done">✓</div>
+      <div class="step-line done"></div>
+      <div class="step-dot active">3</div>
+    </div>
+
+    <div class="section-title">약관 동의</div>
+    <div class="section-sub">이용약관을 확인하고 동의해주세요.</div>
+
+    <div class="terms-box" id="termsBox">
+      <h4>[ 이용약관 ]</h4>
+      <ol>
+        <li>본인 부주의로 발생되는 사고에 대해서는 책임을 지지 않습니다.</li>
+        <li>해지를 원하시는 입주민은 <strong>반드시 안내 데스크에 방문하셔서 <span style="color:#dc2626;">해지신청서</span> 작성.</strong></li>
+        <li>등록 후 <strong>미 이용 시 연기 및 환불이 불가하며 반드시 해지신청</strong>하셔야 합니다.</li>
+        <li>안전을 위해 영유아, 초등학생, 애완동물의 동반출입을 금지합니다.</li>
+        <li>음주 후 출입불가 하며, 모든 음식물 반입을 금지합니다.</li>
+        <li>모든 비품과 시설물의 보호에 힘쓰고, 고의/과실로 파손하거나 훼손한 경우 배상 책임이 있습니다.</li>
+      </ol>
+    </div>
+
+    <label class="agree-row" id="agreeRow1">
+      <input type="checkbox" id="agree1" onchange="handleAgree1Change()">
+      <span>이용약관에 동의합니다</span>
+    </label>
+
+    <div class="privacy-box" id="privacyBox">
+      <h4>[ 개인정보 수집·이용 동의서 ]</h4>
+      <p><strong>1. 개인정보 수집·이용 목적</strong></p>
+      <p>- 커뮤니티센터 운영에 대한 이용약관 동의 및 회원가입 신청</p>
+      <p><strong>2. 수집항목</strong></p>
+      <p>- 성명, 성별, 생년월일, 주소, 전화번호</p>
+      <p><strong>3. 보유·이용기간</strong></p>
+      <p>- 이용종료 후 2년</p>
+      <p><strong>4. 동의 거부 고지</strong></p>
+      <p>- 개인정보 수집, 이용을 거부하실 수 있습니다. 거부할 경우 커뮤니티시설 이용이 제한될 수 있습니다.</p>
+      <p><strong>5. 제3자 제공 동의</strong></p>
+      <p>- 제공받는 자: (주)스포이즘, 관리사무소</p>
+      <p>- 이용목적: 커뮤니티시설 이용의 확인 및 입주민 확인</p>
+      <p>- 제공항목: 성명, 전화번호, 생년월일, 주소</p>
+      <p>- 보유기간: 커뮤니티 이용 종료 후 2년</p>
+    </div>
+
+    <div id="agree2Group" style="display:none;">
+      <label class="agree-row" id="agreeRow2">
+        <input type="checkbox" id="agree2" onchange="handleAgree2Change()">
+        <span>개인정보 수집·이용에 동의합니다</span>
+      </label>
+    </div>
+
+    <div class="form-group" id="signatureGroup" style="display:none;margin-top:20px;">
+      <label class="form-label">서명 <span class="req">*</span></label>
+      <p class="sig-help">✍️ 아래 박스에 손가락이나 마우스로 서명해주세요</p>
+      <div class="sig-wrap">
+        <canvas class="sig-canvas" id="sigCanvas"></canvas>
+        <div class="sig-hint" id="sigHint">↓ 여기에 서명해주세요</div>
+      </div>
+      <button type="button" class="sig-clear" onclick="clearSig()">서명 지우기</button>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-prev" onclick="goPage(2)">← 이전</button>
+      <button class="btn btn-next" id="submitBtn" onclick="submitForm()">신청 완료 →</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       완료 화면
+  ══════════════════════════════════ -->
+  <div class="success-card" id="successCard">
+    <div class="success-icon">🎉</div>
+    <div class="success-title">신청이 완료되었습니다!</div>
+    <div class="success-msg">
+      담당 강사가 확인 후<br>카카오 알림톡으로 안내드립니다.<br>
+      <strong style="color:var(--teal);">✨ 함께하면 시너지 Up!</strong>
+    </div>
+    <div class="summary-box" id="summaryBox"></div>
+    <button class="btn-drive" onclick="saveToDrive()">📄 신청서 저장 (드라이브)</button>
+  </div>
+</div>
+
+<!-- 로딩 -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-box">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">신청서를 제출하는 중입니다...</div>
+  </div>
+</div>
+
+<!-- A4 캡처용 숨김 문서 -->
+<div class="a4-doc" id="a4Doc"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// 설정값
+// ══════════════════════════════════════════════════════
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwVJSc6rY5tcBSB1VaRi4DBEXGyUBr1ADFfs6QEA9Z9bu0G-0mdMAv374-MdPVYMnSaeQ/exec';
+
+const TIME_SLOTS = [
+  '9:00','9:30','10:00','10:30','11:00','11:30',
+  '12:00','12:30','13:00','13:30','14:00','14:30',
+  '15:00','15:30','16:00','16:30','17:00','17:30',
+  '18:00','18:30','19:00','19:30'
+];
+
+const DAYS_ORDER = ['월','화','수','목','금','토'];
+const DAY_EN = { '월':'Mon','화':'Tue','수':'Wed','목':'Thu','금':'Fri','토':'Sat' };
+
+// ══════════════════════════════════════════════════════
+// 시작 주간 옵션 (고정 메뉴 · value = 해당 주 월요일 YYYY-MM-DD)
+// ══════════════════════════════════════════════════════
+const START_WEEK_OPTIONS = [
+  { value: '2026-05-04', label: '5월 2주차 (5/4일 이후)' },
+  { value: '2026-05-11', label: '5월 3주차 (5/11일 이후)' },
+  { value: '2026-05-18', label: '5월 4주차 (5/18일 이후)' },
+  { value: '2026-05-25', label: '5월 5주차 (5/25일 이후)' },
+  { value: '2026-06-01', label: '6월 1주차 (6/1일 이후)' },
+  { value: '2026-06-08', label: '6월 2주차 (6/8일 이후)' },
+  { value: '2026-06-15', label: '6월 3주차 (6/15일 이후)' },
+];
+
+function buildWeekOptions() {
+  const sel = document.getElementById('startWeek');
+  if (!sel) return;
+  sel.innerHTML = '';
+  const ph = document.createElement('option');
+  ph.value = '';
+  ph.textContent = '선택하세요';
+  sel.appendChild(ph);
+
+  START_WEEK_OPTIONS.forEach(function (row) {
+    const opt = document.createElement('option');
+    opt.value = row.value;
+    opt.textContent = row.label;
+    sel.appendChild(opt);
+  });
+}
+
+function fmtDate(d) {
+  return `${d.getMonth()+1}월 ${d.getDate()}일`;
+}
+
+function updateWeekDates() {
+  // 요일 선택 리셋
+  document.querySelectorAll('#dayGrid input').forEach(cb => cb.checked = false);
+  buildTimePickers();
+}
+
+// ══════════════════════════════════════════════════════
+// 요일별 시간 피커 동적 생성
+// ══════════════════════════════════════════════════════
+function buildTimePickers() {
+  const selectedDays = DAYS_ORDER.filter(d => {
+    const el = document.querySelector(`#dayGrid input[value="${d}"]`);
+    return el && el.checked;
+  });
+
+  const wrap = document.getElementById('timePickersWrap');
+  const sec  = document.getElementById('timeSection');
+
+  wrap.innerHTML = '';
+
+  if (selectedDays.length === 0) {
+    sec.style.display = 'none';
+    return;
+  }
+
+  sec.style.display = 'block';
+
+  selectedDays.forEach(day => {
+    const weekVal  = document.getElementById('startWeek').value;
+    let   dateStr  = '';
+
+    if (weekVal) {
+      // 해당 주의 특정 요일 날짜 계산
+      const monday = new Date(weekVal);
+      const dayIdx = DAYS_ORDER.indexOf(day); // 0=월…5=토
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + dayIdx);
+      dateStr = ` (${fmtDate(d)})`;
+    }
+
+    const label = document.createElement('div');
+    label.className = 'time-day-label';
+    label.textContent = day + '요일' + dateStr;
+    wrap.appendChild(label);
+
+    const grid = document.createElement('div');
+    grid.className = 'time-grid';
+
+    TIME_SLOTS.forEach((t, i) => {
+      const id = `time_${day}_${i}`;
+      const item = document.createElement('div');
+      item.className = 'time-item';
+      item.innerHTML = `
+        <input type="radio" name="time_${day}" id="${id}" value="${t}">
+        <label for="${id}">${t}</label>
+      `;
+      grid.appendChild(item);
+    });
+
+    wrap.appendChild(grid);
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// 연락처 (010 + 4 + 4)
+// ══════════════════════════════════════════════════════
+function getPhoneDigits() {
+  const mid = document.getElementById('phone-mid');
+  const last = document.getElementById('phone-last');
+  if (!mid || !last) return '';
+  const a = (mid.value || '').replace(/\D/g, '').slice(0, 4);
+  const b = (last.value || '').replace(/\D/g, '').slice(0, 4);
+  return '010' + a + b;
+}
+
+function formatPhoneKo(digits) {
+  if (!digits || digits.length !== 11) return digits || '';
+  return digits.replace(/^(\d{3})(\d{4})(\d{4})$/, '$1-$2-$3');
+}
+
+function setupPhoneInputs() {
+  const mid = document.getElementById('phone-mid');
+  const last = document.getElementById('phone-last');
+  if (!mid || !last) return;
+
+  function stripDigits(el, maxLen) {
+    el.value = (el.value || '').replace(/\D/g, '').slice(0, maxLen);
+  }
+
+  mid.addEventListener('input', function () {
+    stripDigits(mid, 4);
+    if (mid.value.length >= 4) last.focus();
+  });
+
+  last.addEventListener('input', function () {
+    stripDigits(last, 4);
+  });
+
+  last.addEventListener('keydown', function (e) {
+    if (e.key === 'Backspace' && last.value === '') {
+      mid.focus();
+      const len = mid.value.length;
+      try { mid.setSelectionRange(len, len); } catch (err) {}
+    }
+  });
+
+  mid.addEventListener('paste', function (e) {
+    const txt = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+    if (txt.startsWith('010') && txt.length >= 11) {
+      e.preventDefault();
+      mid.value = txt.slice(3, 7);
+      last.value = txt.slice(7, 11);
+      last.focus();
+    } else if (txt.length >= 8) {
+      e.preventDefault();
+      mid.value = txt.slice(0, 4);
+      last.value = txt.slice(4, 8);
+      last.focus();
+    }
+  });
+
+  last.addEventListener('paste', function (e) {
+    const txt = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+    if (txt.startsWith('010') && txt.length >= 11) {
+      e.preventDefault();
+      mid.value = txt.slice(3, 7);
+      last.value = txt.slice(7, 11);
+      return;
+    }
+    if (txt.length >= 4) {
+      e.preventDefault();
+      last.value = txt.slice(0, 4);
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// 페이지 이동 + 유효성 검사
+// ══════════════════════════════════════════════════════
+function goPage(n) {
+  if (n === 2 && !validatePage1()) return;
+  if (n === 3 && !validatePage2()) return;
+
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+  const target = document.getElementById('page' + n);
+  if (target) target.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  if (n === 3) {
+    requestAnimationFrame(function () {
+      var sg = document.getElementById('signatureGroup');
+      if (sg && sg.style.display !== 'none') {
+        resizeSigCanvas();
+        bindSigPadListeners();
+        setTimeout(function () { resizeSigCanvas(); }, 80);
+      }
+    });
+  }
+}
+
+function validatePage1() {
+  const name = document.getElementById('name').value.trim();
+  const digits = getPhoneDigits();
+  if (!name) { alert('이름을 입력해주세요.'); return false; }
+  if (digits.length !== 11 || !/^010\d{8}$/.test(digits)) {
+    alert('연락처를 숫자 11자리로 입력해주세요. (010 포함)');
+    const mid = document.getElementById('phone-mid');
+    const last = document.getElementById('phone-last');
+    if (mid && mid.value.length < 4) mid.focus();
+    else if (last) last.focus();
+    return false;
+  }
+  return true;
+}
+
+function validatePage2() {
+  if (!document.getElementById('startWeek').value) {
+    alert('첫 시작 주간을 선택해주세요.'); return false;
+  }
+  if (!document.querySelector('input[name="instructor"]:checked')) {
+    alert('담당 강사를 선택해주세요.'); return false;
+  }
+  const days = DAYS_ORDER.filter(d => {
+    const el = document.querySelector(`#dayGrid input[value="${d}"]`);
+    return el && el.checked;
+  });
+  if (days.length === 0) { alert('관리 요일을 선택해주세요.'); return false; }
+
+  let allTimePicked = true;
+  days.forEach(d => {
+    if (!document.querySelector(`input[name="time_${d}"]:checked`)) {
+      allTimePicked = false;
+    }
+  });
+  if (!allTimePicked) { alert('모든 요일의 관리 시간을 선택해주세요.'); return false; }
+
+  if (!document.querySelector('input[name="payment"]:checked')) {
+    alert('이용권을 선택해주세요.'); return false;
+  }
+  return true;
+}
+
+// ══════════════════════════════════════════════════════
+// 동의 체크박스
+// ══════════════════════════════════════════════════════
+function updateAgreeStyle(cbId, rowId) {
+  const cb  = document.getElementById(cbId);
+  const row = document.getElementById(rowId);
+  if (cb && row) row.classList.toggle('checked', cb.checked);
+}
+
+function handleAgree1Change() {
+  const agree1 = document.getElementById('agree1').checked;
+  const termsBox = document.getElementById('termsBox');
+  const privacyBox = document.getElementById('privacyBox');
+  const agree2Group = document.getElementById('agree2Group');
+
+  if (agree1) {
+    termsBox.classList.add('collapsed');
+    privacyBox.classList.remove('collapsed');
+    privacyBox.classList.add('expanded');
+    agree2Group.style.display = 'block';
+    updateAgreeStyle('agree1', 'agreeRow1');
+    setTimeout(function () {
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }, 500);
+  } else {
+    termsBox.classList.remove('collapsed');
+    privacyBox.classList.remove('expanded');
+    privacyBox.classList.remove('collapsed');
+    agree2Group.style.display = 'none';
+    document.getElementById('agree2').checked = false;
+    document.getElementById('signatureGroup').style.display = 'none';
+    clearSig();
+    updateAgreeStyle('agree1', 'agreeRow1');
+    updateAgreeStyle('agree2', 'agreeRow2');
+  }
+}
+
+function handleAgree2Change() {
+  const agree2 = document.getElementById('agree2').checked;
+  const privacyBox = document.getElementById('privacyBox');
+  const signatureGroup = document.getElementById('signatureGroup');
+
+  if (agree2) {
+    privacyBox.classList.remove('expanded');
+    privacyBox.classList.add('collapsed');
+    signatureGroup.style.display = 'block';
+    updateAgreeStyle('agree2', 'agreeRow2');
+    setTimeout(function () {
+      resizeSigCanvas();
+      bindSigPadListeners();
+    }, 100);
+    setTimeout(function () {
+      resizeSigCanvas();
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }, 250);
+  } else {
+    privacyBox.classList.remove('collapsed');
+    privacyBox.classList.add('expanded');
+    signatureGroup.style.display = 'none';
+    clearSig();
+    updateAgreeStyle('agree2', 'agreeRow2');
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// 서명 패드 (3페이지가 보인 뒤에 캔버스 크기 지정 — 숨김 상태에서는 폭·높이 0)
+// ══════════════════════════════════════════════════════
+let sigDrawing = false;
+let sigHasMark = false;
+let sigPadListenersBound = false;
+
+function resizeSigCanvas() {
+  const canvas = document.getElementById('sigCanvas');
+  if (!canvas) return;
+
+  const rect = canvas.getBoundingClientRect();
+  let cssW = rect.width;
+  let cssH = rect.height;
+  if (cssW < 20) {
+    const wrap = canvas.closest('.sig-wrap');
+    if (wrap) cssW = wrap.getBoundingClientRect().width;
+    if (cssW < 20) cssW = canvas.parentElement ? canvas.parentElement.clientWidth : 300;
+  }
+  if (cssH < 20) cssH = 180;
+
+  const dpr = window.devicePixelRatio || 1;
+  const needW = Math.max(1, Math.floor(cssW * dpr));
+  const needH = Math.max(1, Math.floor(cssH * dpr));
+
+  if (canvas.width === needW && canvas.height === needH) return;
+
+  let snapshot = null;
+  if (sigHasMark && canvas.width > 0) {
+    try { snapshot = canvas.toDataURL('image/png'); } catch (e) {}
+  }
+
+  canvas.width = needW;
+  canvas.height = needH;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.scale(dpr, dpr);
+  ctx.strokeStyle = '#1a1a1a';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  if (snapshot) {
+    const img = new Image();
+    img.onload = function () {
+      try {
+        ctx.drawImage(img, 0, 0, cssW, cssH);
+      } catch (e) {}
+    };
+    img.src = snapshot;
+  }
+}
+
+function bindSigPadListeners() {
+  if (sigPadListenersBound) return;
+  sigPadListenersBound = true;
+
+  const canvas = document.getElementById('sigCanvas');
+  if (!canvas) return;
+
+  function pos(e) {
+    const r = canvas.getBoundingClientRect();
+    let t = e.touches && e.touches[0];
+    if (!t && e.changedTouches && e.changedTouches[0]) t = e.changedTouches[0];
+    if (!t) t = e;
+    return { x: t.clientX - r.left, y: t.clientY - r.top };
+  }
+
+  canvas.addEventListener('mousedown', function (e) {
+    e.preventDefault();
+    sigDrawing = true;
+    const ctx = canvas.getContext('2d');
+    ctx.beginPath();
+    const p = pos(e);
+    ctx.moveTo(p.x, p.y);
+  });
+
+  canvas.addEventListener('mousemove', function (e) {
+    if (!sigDrawing) return;
+    const ctx = canvas.getContext('2d');
+    const p = pos(e);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    markSig();
+  });
+
+  canvas.addEventListener('mouseup', function () { sigDrawing = false; });
+  canvas.addEventListener('mouseleave', function () { sigDrawing = false; });
+
+  canvas.addEventListener('touchstart', function (e) {
+    e.preventDefault();
+    sigDrawing = true;
+    const ctx = canvas.getContext('2d');
+    ctx.beginPath();
+    const p = pos(e);
+    ctx.moveTo(p.x, p.y);
+  }, { passive: false });
+
+  canvas.addEventListener('touchmove', function (e) {
+    e.preventDefault();
+    if (!sigDrawing) return;
+    const ctx = canvas.getContext('2d');
+    const p = pos(e);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    markSig();
+  }, { passive: false });
+
+  canvas.addEventListener('touchend', function (e) {
+    e.preventDefault();
+    sigDrawing = false;
+  }, { passive: false });
+}
+
+function markSig() {
+  if (!sigHasMark) {
+    sigHasMark = true;
+    document.getElementById('sigHint').style.display = 'none';
+  }
+}
+
+function clearSig() {
+  sigHasMark = false;
+  const hint = document.getElementById('sigHint');
+  if (hint) hint.style.display = 'block';
+  const canvas = document.getElementById('sigCanvas');
+  if (!canvas || canvas.width < 1) return;
+  const ctx = canvas.getContext('2d');
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.restore();
+}
+
+function getSigDataURL() {
+  return document.getElementById('sigCanvas').toDataURL('image/png');
+}
+
+// ══════════════════════════════════════════════════════
+// 데이터 수집
+// ══════════════════════════════════════════════════════
+function collectData() {
+  const days = DAYS_ORDER.filter(d => {
+    const el = document.querySelector(`#dayGrid input[value="${d}"]`);
+    return el && el.checked;
+  });
+  const schedule = {};
+  days.forEach(d => {
+    const t = document.querySelector(`input[name="time_${d}"]:checked`);
+    schedule[d] = t ? t.value : '';
+  });
+
+  const payVal = document.querySelector('input[name="payment"]:checked')?.value || '';
+  const [sessions, amount] = payVal.split('|');
+
+  const weekVal = document.getElementById('startWeek').value;
+
+  return {
+    name:        document.getElementById('name').value.trim(),
+    phone:       getPhoneDigits(),
+    instructor:  document.querySelector('input[name="instructor"]:checked')?.value || '',
+    startWeek:   weekVal,
+    days:        days,
+    schedule:    schedule,   // { 월: '10:00', 수: '14:00', ... }
+    sessions:    sessions,   // '1회' or '10회'
+    amount:      amount,     // '10000' or '850000'
+    signature:   getSigDataURL(),
+    submittedAt: new Date().toISOString(),
+  };
+}
+
+// ══════════════════════════════════════════════════════
+// 제출
+// ══════════════════════════════════════════════════════
+async function submitForm() {
+  if (!document.getElementById('agree1').checked ||
+      !document.getElementById('agree2').checked) {
+    alert('약관에 동의해주세요.'); return;
+  }
+  if (!sigHasMark) {
+    alert('서명을 해주세요.'); return;
+  }
+
+  const data = collectData();
+  showLoading('신청서를 제출하는 중입니다...');
+
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+
+    if (json.result === 'success') {
+      window._submittedData = data;
+      document.getElementById('loadingText').textContent = '신청서를 드라이브에 저장하는 중입니다...';
+      try {
+        await performDriveSave(data);
+      } catch (saveErr) {
+        alert('신청 접수는 완료되었으나, 이미지 저장에 실패했습니다.\n' + saveErr.message + '\n\n아래「신청서 저장」버튼으로 다시 시도해 주세요.');
+      }
+      hideLoading();
+      showSuccess(data);
+    } else {
+      throw new Error(json.message || '서버 오류');
+    }
+  } catch (err) {
+    hideLoading();
+    alert('제출 중 오류가 발생했습니다.\n' + err.message);
+  }
+}
+
+function showSuccess(data) {
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+  const sc = document.getElementById('successCard');
+  sc.classList.add('active');
+
+  const scheduleText = data.days.map(d => `${d} ${data.schedule[d]}`).join(', ');
+  const amountText   = data.amount === '10000' ? '10,000원 (1회)' : '850,000원 (10회)';
+
+  document.getElementById('summaryBox').innerHTML = `
+    <div class="summary-row"><span class="s-label">이름</span><span class="s-val">${data.name}</span></div>
+    <div class="summary-row"><span class="s-label">담당 강사</span><span class="s-val">${data.instructor}</span></div>
+    <div class="summary-row"><span class="s-label">첫 시작 주간</span><span class="s-val">${document.getElementById('startWeek').options[document.getElementById('startWeek').selectedIndex].text}</span></div>
+    <div class="summary-row"><span class="s-label">관리 일정</span><span class="s-val">${scheduleText}</span></div>
+    <div class="summary-row"><span class="s-label">결제</span><span class="s-val">${amountText}</span></div>
+  `;
+
+  window._submittedData = data;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ══════════════════════════════════════════════════════
+// 드라이브 저장 (A4 캡처 → GAS 업로드)
+// ══════════════════════════════════════════════════════
+async function performDriveSave(data) {
+  buildA4(data);
+  await new Promise(function (r) { setTimeout(r, 500); });
+
+  const canvas = await html2canvas(document.getElementById('a4Doc'), {
+    scale: 2, useCORS: true, backgroundColor: '#ffffff'
+  });
+  const imageData = canvas.toDataURL('image/jpeg', 0.92).split(',')[1];
+
+  const res = await fetch(GAS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ action: 'saveDrive', imageData, name: data.name, submittedAt: data.submittedAt }),
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const json = await res.json();
+  if (json.error) {
+    throw new Error(json.message || String(json.error));
+  }
+  return json;
+}
+
+async function saveToDrive() {
+  const data = window._submittedData;
+  if (!data) return;
+
+  showLoading('신청서를 저장하는 중입니다...');
+
+  try {
+    await performDriveSave(data);
+    hideLoading();
+  } catch (err) {
+    hideLoading();
+    alert('저장 중 오류: ' + err.message);
+  }
+}
+
+function buildA4(data) {
+  const scheduleRows = data.days.map(d =>
+    `<tr><td class="lbl">${d}요일</td><td>${data.schedule[d]}</td></tr>`
+  ).join('');
+  const amountText = data.amount === '10000' ? '90,000원 (1회 이용권)' : '850,000원 (10회 이용권)';
+  const weekLabel  = document.getElementById('startWeek').options[document.getElementById('startWeek').selectedIndex].text;
+
+  document.getElementById('a4Doc').innerHTML = `
+    <div class="a4-title">리:얼 커뮤니티센터 회원 신청서</div>
+    <table class="a4-table">
+      <tr><td class="lbl">이름</td><td>${data.name}</td><td class="lbl">연락처</td><td>${formatPhoneKo(data.phone)}</td></tr>
+      <tr><td class="lbl">담당 강사</td><td>${data.instructor}</td><td class="lbl">첫 시작 주간</td><td>${weekLabel}</td></tr>
+      <tr><td class="lbl">이용권</td><td colspan="3">${amountText}</td></tr>
+      ${scheduleRows}
+    </table>
+    <div class="a4-section">
+      <h3>이용 약관 동의</h3>
+      1. 관리 전/후 자세 기록용 사진 촬영에 동의합니다.<br>
+      2. 지각 시 예약된 시간 내에서만 진행됩니다.<br>
+      3. 일정 변경은 예약일 2일 전까지 가능합니다.<br>
+      4. 취소는 첫 예약일 5일 전까지 가능합니다.<br>
+      5. 결제 비용은 다음 달 관리비에 포함됩니다.<br><br>
+      본인은 위 약관을 확인하고 동의합니다.<br><br>
+      신청일: ${new Date(data.submittedAt).toLocaleDateString('ko-KR')}&nbsp;&nbsp;&nbsp;
+      신청인: <span class="a4-sig"><img src="${data.signature}" alt="서명"></span> (서명)
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════════════════
+// 로딩
+// ══════════════════════════════════════════════════════
+function showLoading(msg) {
+  document.getElementById('loadingText').textContent = msg || '처리 중...';
+  document.getElementById('loadingOverlay').classList.add('active');
+}
+function hideLoading() {
+  document.getElementById('loadingOverlay').classList.remove('active');
+}
+
+// ══════════════════════════════════════════════════════
+// 초기화
+// ══════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  buildWeekOptions();
+  setupPhoneInputs();
+});
+</script>
+</body>
+</html>
