@@ -304,12 +304,28 @@ body {
   background: var(--bg);
 }
 .time-item label:hover { border-color: var(--teal); }
+.time-item label.slot-busy {
+  border-width: 2px;
+}
+.time-item input:checked + label.slot-busy {
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.85);
+}
 .time-item input:checked + label {
   background: linear-gradient(135deg, var(--teal), var(--green));
   border-color: transparent;
   color: #fff;
   font-weight: 700;
 }
+.schedule-legend {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: rgba(0,176,155,0.06);
+  border-radius: 10px;
+}
+.schedule-legend strong { color: var(--text); }
 
 /* 강사 선택 */
 .instructor-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
@@ -535,6 +551,10 @@ body {
   margin-bottom: 12px;
 }
 .success-msg { font-size: 15px; color: var(--muted); line-height: 1.7; margin-bottom: 28px; }
+.success-note {
+  font-size: 12px; color: var(--muted); line-height: 1.5; margin: -12px 0 20px;
+  text-align: left;
+}
 .summary-box {
   background: var(--teal-lt);
   border-radius: 14px;
@@ -552,6 +572,10 @@ body {
 .summary-row:last-child { border-bottom: none; }
 .summary-row .s-label { color: var(--muted); }
 .summary-row .s-val { font-weight: 700; color: var(--text); }
+.summary-row.summary-dates { align-items: flex-start; }
+.summary-row .s-val.s-dates {
+  font-size: 13px; line-height: 1.55; font-weight: 600; max-width: 62%; text-align: right;
+}
 .btn-drive {
   width: 100%;
   padding: 16px;
@@ -662,7 +686,7 @@ body {
     <!-- 시작 주간 -->
     <div class="form-group">
       <label class="form-label">첫 시작 주간 선택 <span class="req">*</span></label>
-      <select class="week-select" id="startWeek" onchange="updateWeekDates()">
+      <select class="week-select" id="startWeek" onchange="onStartWeekChange()">
         <option value="">선택하세요</option>
       </select>
     </div>
@@ -672,17 +696,17 @@ body {
       <label class="form-label">담당 강사 <span class="req">*</span></label>
       <div class="instructor-grid" id="instructorGrid">
         <div class="inst-item">
-          <input type="radio" name="instructor" id="inst1" value="강사1">
+          <input type="radio" name="instructor" id="inst1" value="박준규">
           <label for="inst1">
             <div class="inst-icon">👤</div>
-            <div class="inst-name">강사 1</div>
+            <div class="inst-name">박준규 원장</div>
           </label>
         </div>
         <div class="inst-item">
-          <input type="radio" name="instructor" id="inst2" value="강사2">
+          <input type="radio" name="instructor" id="inst2" value="최진옥">
           <label for="inst2">
             <div class="inst-icon">👤</div>
-            <div class="inst-name">강사 2</div>
+            <div class="inst-name">최진옥 원장</div>
           </label>
         </div>
         <div class="inst-item">
@@ -730,6 +754,9 @@ body {
     <div class="form-group" id="timeSection" style="display:none;">
       <label class="form-label">관리 시간 <span class="req">*</span></label>
       <div id="timePickersWrap"></div>
+      <p id="scheduleBusyLegend" class="schedule-legend" hidden>
+        <strong>색 표시</strong> 구글 시트에 이미 예약된 시간입니다. 강사별 색은 스케줄표와 동일합니다. 세로로 여러 색이 겹치면 강사별로 예약이 함께 있는 경우입니다.
+      </p>
     </div>
 
     <!-- 결제 -->
@@ -737,10 +764,10 @@ body {
       <label class="form-label">이용권 선택 <span class="req">*</span></label>
       <div class="pay-grid">
         <div class="pay-item">
-          <input type="radio" name="payment" id="pay1" value="1회|10000">
+          <input type="radio" name="payment" id="pay1" value="1회|90000">
           <label for="pay1">
             <div class="pay-name">1회 이용권</div>
-            <div class="pay-price">10,000원</div>
+            <div class="pay-price">90,000원</div>
             <div class="pay-desc">단건 이용</div>
           </label>
         </div>
@@ -845,7 +872,7 @@ body {
       <strong style="color:var(--teal);">✨ 함께하면 시너지 Up!</strong>
     </div>
     <div class="summary-box" id="summaryBox"></div>
-    <button class="btn-drive" onclick="saveToDrive()">📄 신청서 저장 (드라이브)</button>
+    <button class="btn-drive" id="returnBtn" onclick="returnToStartNow()">처음으로 돌아가기 (30초)</button>
   </div>
 </div>
 
@@ -854,6 +881,7 @@ body {
   <div class="loading-box">
     <div class="spinner"></div>
     <div class="loading-text" id="loadingText">신청서를 제출하는 중입니다...</div>
+    <div class="loading-text" id="loadingCountdown" style="margin-top:6px;font-size:13px;" hidden>남은 시간: 0초</div>
   </div>
 </div>
 
@@ -866,44 +894,202 @@ body {
 // ══════════════════════════════════════════════════════
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwVJSc6rY5tcBSB1VaRi4DBEXGyUBr1ADFfs6QEA9Z9bu0G-0mdMAv374-MdPVYMnSaeQ/exec';
 
+/** code.gs CONFIG.TIME_SLOTS 과 동일하게 유지 (시트 행과 매칭) */
 const TIME_SLOTS = [
   '9:00','9:30','10:00','10:30','11:00','11:30',
-  '12:00','12:30','13:00','13:30','14:00','14:30',
-  '15:00','15:30','16:00','16:30','17:00','17:30',
-  '18:00','18:30','19:00','19:30'
+  '12:00','12:30',
+  '13:30','14:00','14:30','15:00','15:30',
+  '16:00','16:30','17:00','17:30','18:00','18:30',
+  '19:00','19:30','20:00','20:30','21:00'
 ];
 
 const DAYS_ORDER = ['월','화','수','목','금','토'];
 const DAY_EN = { '월':'Mon','화':'Tue','수':'Wed','목':'Thu','금':'Fri','토':'Sat' };
+const WEEKDAY_NAMES = ['일','월','화','수','목','금','토'];
+/** 기존 신청서와 동일: 한글 요일 → JS getDay() (월=1 … 토=6) */
+const DAY_MAP_KO_TO_JS = { '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6 };
+/** JS getDay() 0=일 … 6=토 → 한글 */
+const JS_TO_KOR = ['일', '월', '화', '수', '목', '금', '토'];
 
 // ══════════════════════════════════════════════════════
-// 시작 주간 옵션 (고정 메뉴 · value = 해당 주 월요일 YYYY-MM-DD)
+// 시작 주간 옵션 (기존 신청서.html 과 동일한 주차·라벨 계산)
+// value = 해당 주 월요일 YYYY-MM-DD (로컬)
 // ══════════════════════════════════════════════════════
-const START_WEEK_OPTIONS = [
-  { value: '2026-05-04', label: '5월 2주차 (5/4일 이후)' },
-  { value: '2026-05-11', label: '5월 3주차 (5/11일 이후)' },
-  { value: '2026-05-18', label: '5월 4주차 (5/18일 이후)' },
-  { value: '2026-05-25', label: '5월 5주차 (5/25일 이후)' },
-  { value: '2026-06-01', label: '6월 1주차 (6/1일 이후)' },
-  { value: '2026-06-08', label: '6월 2주차 (6/8일 이후)' },
-  { value: '2026-06-15', label: '6월 3주차 (6/15일 이후)' },
-];
+function getCurrentWeekMonday(date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
 
-function buildWeekOptions() {
-  const sel = document.getElementById('startWeek');
-  if (!sel) return;
-  sel.innerHTML = '';
+function getWeekOfMonth(date) {
+  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+  const dayOfMonth = date.getDate();
+  return Math.ceil((dayOfMonth + firstDay.getDay()) / 7);
+}
+
+function formatDateForDB(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function generateStartWeekOptions() {
+  const select = document.getElementById('startWeek');
+  if (!select) return;
+
+  select.innerHTML = '';
   const ph = document.createElement('option');
   ph.value = '';
   ph.textContent = '선택하세요';
-  sel.appendChild(ph);
+  select.appendChild(ph);
 
-  START_WEEK_OPTIONS.forEach(function (row) {
-    const opt = document.createElement('option');
-    opt.value = row.value;
-    opt.textContent = row.label;
-    sel.appendChild(opt);
+  const today = new Date();
+  const currentMonday = getCurrentWeekMonday(today);
+
+  const startDate = new Date(currentMonday);
+  const endDate = new Date(currentMonday);
+  endDate.setDate(endDate.getDate() + 7 * 6);
+
+  let tempDate = new Date(startDate);
+  while (tempDate <= endDate) {
+    const month = tempDate.getMonth() + 1;
+    const weekOfMonth = getWeekOfMonth(tempDate);
+    const dateStr = `${month}/${tempDate.getDate()}`;
+    const option = document.createElement('option');
+    option.value = formatDateForDB(tempDate);
+    option.textContent = `${month}월 ${weekOfMonth}주차 (${dateStr}일 이후)`;
+    select.appendChild(option);
+    tempDate.setDate(tempDate.getDate() + 7);
+  }
+
+  if (select.options.length > 1) select.selectedIndex = 1;
+}
+
+function parseYMD(s) {
+  if (!s) return null;
+  const parts = String(s).split('-');
+  if (parts.length !== 3) return null;
+  const y = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10);
+  const d = parseInt(parts[2], 10);
+  return new Date(y, m - 1, d);
+}
+
+/**
+ * 첫 시작 주간(월요일)부터, 선택 요일을 주 단위로 반복하여 회차별 후보 날짜(공휴일 미반영).
+ */
+function computeSessionDatesRaw(startWeekValue, daysOrdered, sessionsLabel) {
+  const totalSessions = sessionsLabel === '10회' ? 10 : 1;
+  if (!startWeekValue || !daysOrdered || daysOrdered.length === 0) return [];
+
+  const monday = parseYMD(startWeekValue);
+  if (!monday || isNaN(monday.getTime())) return [];
+  monday.setHours(0, 0, 0, 0);
+
+  const sortedDays = daysOrdered.slice().sort(function (a, b) {
+    return DAY_MAP_KO_TO_JS[a] - DAY_MAP_KO_TO_JS[b];
   });
+
+  const out = [];
+  let week = 0;
+  while (out.length < totalSessions) {
+    for (let i = 0; i < sortedDays.length; i++) {
+      if (out.length >= totalSessions) break;
+      const kor = sortedDays[i];
+      const off = DAY_MAP_KO_TO_JS[kor] - 1;
+      const dt = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate());
+      dt.setDate(dt.getDate() + week * 7 + off);
+      out.push(dt);
+    }
+    week++;
+  }
+  return out;
+}
+
+/** 공휴일이면 다음 날로 밀며, 선택 요일·중복만 피할 때까지 반복 */
+function bumpUntilSessionValid(d0, holidaySet, allowedKorSet, seenYmd) {
+  let d = new Date(d0.getFullYear(), d0.getMonth(), d0.getDate());
+  let guard = 0;
+  while (guard++ < 120) {
+    const key = formatDateForDB(d);
+    const kor = JS_TO_KOR[d.getDay()];
+    const okDay = allowedKorSet.has(kor);
+    const okHol = !holidaySet || holidaySet.size === 0 || !holidaySet.has(key);
+    const okDup = !seenYmd.has(key);
+    if (okDay && okHol && okDup) return d;
+    d.setDate(d.getDate() + 1);
+  }
+  return new Date(d0.getFullYear(), d0.getMonth(), d0.getDate());
+}
+
+function adjustSessionsForHolidays(rawDates, holidaySet, sortedKorDays) {
+  const allowed = new Set(sortedKorDays);
+  const seen = new Set();
+  const out = [];
+  for (let i = 0; i < rawDates.length; i++) {
+    const adj = bumpUntilSessionValid(rawDates[i], holidaySet || new Set(), allowed, seen);
+    seen.add(formatDateForDB(adj));
+    out.push(adj);
+  }
+  return out;
+}
+
+/**
+ * 예정 관리일. holidaySet이 비어 있으면 공휴일 미반영.
+ * 공휴일이 포함된 경우: 선택한 요일 중 하나이면서 공휴일이 아닌 가장 가까운 날로 연기.
+ */
+function computeSessionDates(startWeekValue, daysOrdered, sessionsLabel, holidaySet) {
+  const raw = computeSessionDatesRaw(startWeekValue, daysOrdered, sessionsLabel);
+  if (!holidaySet || holidaySet.size === 0) return raw;
+  const sortedDays = daysOrdered.slice().sort(function (a, b) {
+    return DAY_MAP_KO_TO_JS[a] - DAY_MAP_KO_TO_JS[b];
+  });
+  return adjustSessionsForHolidays(raw, holidaySet, sortedDays);
+}
+
+function yearsSpanForSchedule(startWeekValue, sessionsLabel) {
+  const yset = new Set();
+  const yNow = new Date().getFullYear();
+  yset.add(yNow);
+  yset.add(yNow + 1);
+  yset.add(yNow + 2);
+  const mon = parseYMD(startWeekValue);
+  if (mon && !isNaN(mon.getTime())) {
+    const extra = sessionsLabel === '10회' ? 10 : 2;
+    const end = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate());
+    end.setDate(end.getDate() + extra * 7);
+    for (let y = mon.getFullYear(); y <= end.getFullYear(); y++) yset.add(y);
+  }
+  return Array.from(yset).sort(function (a, b) { return a - b; });
+}
+
+async function fetchKoreanHolidaysFromGas(years) {
+  const res = await fetch(GAS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ action: 'getHolidays', years: years }),
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const text = await res.text();
+  let json;
+  try {
+    json = JSON.parse(text);
+  } catch (e) {
+    throw new Error('공휴일 응답 형식 오류');
+  }
+  if (json.result === 'error' || json.error) {
+    throw new Error(json.message || json.error || '공휴일 조회 실패');
+  }
+  const dates = json.dates || [];
+  return new Set(dates);
+}
+
+function formatSessionDateKo(dt) {
+  return `${dt.getMonth() + 1}/${dt.getDate()}(${WEEKDAY_NAMES[dt.getDay()]})`;
 }
 
 function fmtDate(d) {
@@ -914,6 +1100,77 @@ function updateWeekDates() {
   // 요일 선택 리셋
   document.querySelectorAll('#dayGrid input').forEach(cb => cb.checked = false);
   buildTimePickers();
+}
+
+function onStartWeekChange() {
+  updateWeekDates();
+  fetchScheduleBusy().then(function () {
+    applyScheduleBusyStyles();
+    updateScheduleLegendVisibility();
+  });
+}
+
+function mergeBusyList(booked) {
+  const m = {};
+  (booked || []).forEach(function (b) {
+    const key = b.ymd + '|' + b.time;
+    if (!m[key]) m[key] = [];
+    m[key].push(b);
+  });
+  window._busyBySlot = m;
+}
+
+// 예약현황 기능 비활성화: 느린 응답/에러로 페이지 이동이 멈추는 문제 방지
+window._busyBySlot = {};
+window._lastBusyCount = 0;
+
+async function fetchScheduleBusy() {
+  window._busyBySlot = {};
+  window._lastBusyCount = 0;
+  try { updateScheduleLegendVisibility(); } catch (e) {}
+}
+
+/** GAS 응답이 느릴 때 페이지 전환이 멈추지 않도록 상한(ms). 이전 조회 캐시로 검증 진행 */
+async function fetchScheduleBusyBounded(maxMs) {
+  // 비활성화된 상태에서는 즉시 종료
+  await fetchScheduleBusy();
+}
+
+function updateScheduleLegendVisibility() {
+  const el = document.getElementById('scheduleBusyLegend');
+  if (!el) return;
+  el.hidden = !(window._lastBusyCount > 0);
+}
+
+/** 예약 표시 갱신 (시간 칸이 없어도 캐시만 최신으로) */
+function applyScheduleBusyIfVisible() {
+  applyScheduleBusyStyles();
+  updateScheduleLegendVisibility();
+}
+
+var _schedulePrefetchTimer = null;
+
+/** 첫 페이지 입력 중·도착 직후 미리 시트 예약 조회 (관리 요일 누르기 전에 끝나도록) */
+function scheduleScheduleBusyPrefetch() {
+  clearTimeout(_schedulePrefetchTimer);
+  _schedulePrefetchTimer = setTimeout(function () {
+    var sw = document.getElementById('startWeek');
+    if (!sw || !sw.value) return;
+    fetchScheduleBusy().then(applyScheduleBusyIfVisible);
+  }, 400);
+}
+
+function setupPage1SchedulePrefetch() {
+  var name = document.getElementById('name');
+  if (name) name.addEventListener('input', scheduleScheduleBusyPrefetch);
+}
+
+function applyScheduleBusyStyles() {
+  // 예약현황 표시 비활성화
+}
+
+function isSlotBookedForInstructor(ymd, timeStr, instructorName) {
+  return false;
 }
 
 // ══════════════════════════════════════════════════════
@@ -942,12 +1199,13 @@ function buildTimePickers() {
     let   dateStr  = '';
 
     if (weekVal) {
-      // 해당 주의 특정 요일 날짜 계산
-      const monday = new Date(weekVal);
-      const dayIdx = DAYS_ORDER.indexOf(day); // 0=월…5=토
-      const d = new Date(monday);
-      d.setDate(monday.getDate() + dayIdx);
-      dateStr = ` (${fmtDate(d)})`;
+      const monday = parseYMD(weekVal);
+      if (monday) {
+        const off = DAY_MAP_KO_TO_JS[day] - 1;
+        const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate());
+        d.setDate(d.getDate() + off);
+        dateStr = ` (${fmtDate(d)})`;
+      }
     }
 
     const label = document.createElement('div');
@@ -971,6 +1229,8 @@ function buildTimePickers() {
 
     wrap.appendChild(grid);
   });
+
+  applyScheduleBusyStyles();
 }
 
 // ══════════════════════════════════════════════════════
@@ -1002,10 +1262,21 @@ function setupPhoneInputs() {
   mid.addEventListener('input', function () {
     stripDigits(mid, 4);
     if (mid.value.length >= 4) last.focus();
+    scheduleScheduleBusyPrefetch();
   });
 
   last.addEventListener('input', function () {
     stripDigits(last, 4);
+    var digits = getPhoneDigits();
+    if (digits.length === 11) {
+      clearTimeout(_schedulePrefetchTimer);
+      var sw = document.getElementById('startWeek');
+      if (sw && sw.value) {
+        fetchScheduleBusy().then(applyScheduleBusyIfVisible);
+      }
+    } else {
+      scheduleScheduleBusyPrefetch();
+    }
   });
 
   last.addEventListener('keydown', function (e) {
@@ -1023,6 +1294,9 @@ function setupPhoneInputs() {
       mid.value = txt.slice(3, 7);
       last.value = txt.slice(7, 11);
       last.focus();
+      clearTimeout(_schedulePrefetchTimer);
+      var swm = document.getElementById('startWeek');
+      if (swm && swm.value) fetchScheduleBusy().then(applyScheduleBusyIfVisible);
     } else if (txt.length >= 8) {
       e.preventDefault();
       mid.value = txt.slice(0, 4);
@@ -1037,6 +1311,9 @@ function setupPhoneInputs() {
       e.preventDefault();
       mid.value = txt.slice(3, 7);
       last.value = txt.slice(7, 11);
+      clearTimeout(_schedulePrefetchTimer);
+      var swl = document.getElementById('startWeek');
+      if (swl && swl.value) fetchScheduleBusy().then(applyScheduleBusyIfVisible);
       return;
     }
     if (txt.length >= 4) {
@@ -1046,12 +1323,62 @@ function setupPhoneInputs() {
   });
 }
 
+/** Enter 키로 「다음」/「신청 완료」와 동일 동작 (한글 IME 조합 중에는 무시) */
+function setupEnterToAdvance() {
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' || e.ctrlKey || e.altKey || e.metaKey || e.isComposing) return;
+
+    const p1 = document.getElementById('page1');
+    const p2 = document.getElementById('page2');
+    const p3 = document.getElementById('page3');
+
+    if (p1 && p1.classList.contains('active')) {
+      if (!e.target.closest || !e.target.closest('#page1')) return;
+      if (e.target.closest('.btn-row')) return;
+      e.preventDefault();
+      goPage(2);
+      return;
+    }
+
+    if (p2 && p2.classList.contains('active')) {
+      if (!e.target.closest || !e.target.closest('#page2')) return;
+      if (e.target.closest('.btn-row')) return;
+      const tag = (e.target.tagName || '').toLowerCase();
+      const inp = e.target;
+      if (tag === 'textarea') return;
+      if (tag === 'input' && (inp.type === 'radio' || inp.type === 'checkbox')) return;
+      e.preventDefault();
+      goPage(3);
+      return;
+    }
+
+    if (p3 && p3.classList.contains('active')) {
+      if (!e.target.closest || !e.target.closest('#page3')) return;
+      if (e.target.closest('.btn-row')) return;
+      if (e.target.id === 'sigCanvas' || (e.target.closest && e.target.closest('.sig-wrap'))) return;
+      if ((e.target.tagName || '').toLowerCase() === 'textarea') return;
+      e.preventDefault();
+      submitForm();
+    }
+  });
+}
+
 // ══════════════════════════════════════════════════════
 // 페이지 이동 + 유효성 검사
 // ══════════════════════════════════════════════════════
-function goPage(n) {
+async function goPage(n) {
   if (n === 2 && !validatePage1()) return;
-  if (n === 3 && !validatePage2()) return;
+  // 1→2 이동은 GAS 대기 없이 즉시 전환 (startWeek 기본값 때문에 fetch가 걸리면 다음이 안 넘어가는 문제 방지)
+  if (n === 2) {
+    fetchScheduleBusy().then(function () {
+      applyScheduleBusyStyles();
+      updateScheduleLegendVisibility();
+    });
+  }
+  if (n === 3) {
+    await fetchScheduleBusyBounded(2200);
+    if (!validatePage2()) return;
+  }
 
   document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
   const target = document.getElementById('page' + n);
@@ -1105,6 +1432,8 @@ function validatePage2() {
     }
   });
   if (!allTimePicked) { alert('모든 요일의 관리 시간을 선택해주세요.'); return false; }
+
+  // 예약현황 중복 검사 비활성화 (페이지 이동/신청을 막지 않도록)
 
   if (!document.querySelector('input[name="payment"]:checked')) {
     alert('이용권을 선택해주세요.'); return false;
@@ -1332,24 +1661,78 @@ function collectData() {
   const [sessions, amount] = payVal.split('|');
 
   const weekVal = document.getElementById('startWeek').value;
+  const weekSel = document.getElementById('startWeek');
+  const weekLabel = weekSel && weekSel.selectedIndex >= 0
+    ? weekSel.options[weekSel.selectedIndex].text
+    : '';
+
+  const hol = window._holidaySet || new Set();
+  const sessionDTs = computeSessionDates(weekVal, days, sessions, hol);
+  const sessionDatesFormatted = sessionDTs.map(formatSessionDateKo);
+  const sessionRangeText = sessionDatesFormatted.length >= 2
+    ? `${sessionDatesFormatted[0]} ~ ${sessionDatesFormatted[sessionDatesFormatted.length - 1]}`
+    : (sessionDatesFormatted[0] || '');
+  const sessionDatesNote = hol.size > 0
+    ? '※ 예정 관리일은 공공데이터포털 휴일 정보를 반영해 조정되었습니다.'
+    : '';
 
   return {
     name:        document.getElementById('name').value.trim(),
     phone:       getPhoneDigits(),
     instructor:  document.querySelector('input[name="instructor"]:checked')?.value || '',
     startWeek:   weekVal,
+    startWeekLabel: weekLabel,
     days:        days,
     schedule:    schedule,   // { 월: '10:00', 수: '14:00', ... }
     sessions:    sessions,   // '1회' or '10회'
     amount:      amount,     // '10000' or '850000'
     signature:   getSigDataURL(),
     submittedAt: new Date().toISOString(),
+    sessionDatesFormatted,
+    sessionRangeText,
+    sessionDatesNote,
   };
 }
 
 // ══════════════════════════════════════════════════════
 // 제출
 // ══════════════════════════════════════════════════════
+function withTimeoutMs(promise, ms, errMsg) {
+  return Promise.race([
+    promise,
+    new Promise(function (_, reject) {
+      setTimeout(function () {
+        reject(new Error(errMsg || ('작업 시간 초과(' + Math.round(ms / 1000) + '초)')));
+      }, ms);
+    }),
+  ]);
+}
+
+/** 완료 화면의 드라이브 링크 행만 갱신 (JPEG 백그라운드 저장 후) */
+function updateSummaryDriveLink_(url, errMsg) {
+  var el = document.getElementById('summaryDriveLink');
+  if (!el) return;
+  el.textContent = '';
+  el.style.fontWeight = '';
+  el.style.color = '';
+  if (url) {
+    var a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.textContent = '드라이브 열기(JPEG)';
+    el.appendChild(a);
+    return;
+  }
+  if (errMsg) {
+    el.textContent = '저장 실패: ' + errMsg;
+    el.style.fontWeight = '600';
+    el.style.color = '#444';
+    return;
+  }
+  el.textContent = '저장 중…';
+}
+
 async function submitForm() {
   if (!document.getElementById('agree1').checked ||
       !document.getElementById('agree2').checked) {
@@ -1359,27 +1742,55 @@ async function submitForm() {
     alert('서명을 해주세요.'); return;
   }
 
+  // 공휴일 조회는 제출 흐름에서 제외 (지연/404로 인해 신청 완료가 흔들리는 문제 방지)
+  window._holidaySet = new Set();
   const data = collectData();
-  showLoading('신청서를 제출하는 중입니다...');
+
+  showLoading('신청서를 접수하는 중입니다');
+  startLoadingCountdown('신청서를 접수하는 중입니다', 10);
 
   try {
-    const res = await fetch(GAS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(data),
-    });
-    const json = await res.json();
+    var res = await withTimeoutMs(
+      fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(data),
+      }),
+      120000,
+      '서버 응답이 너무 오래 걸립니다. 잠시 후 다시 시도해 주세요.'
+    );
+    var json = await res.json();
+    window._lastSubmitResult = json;
 
     if (json.result === 'success') {
       window._submittedData = data;
-      document.getElementById('loadingText').textContent = '신청서를 드라이브에 저장하는 중입니다...';
-      try {
-        await performDriveSave(data);
-      } catch (saveErr) {
-        alert('신청 접수는 완료되었으나, 이미지 저장에 실패했습니다.\n' + saveErr.message + '\n\n아래「신청서 저장」버튼으로 다시 시도해 주세요.');
-      }
+      window._lastDriveSave = {};
+      window._lastDriveSaveError = '';
+
+      // html2canvas·드라이브 업로드가 길어지면 화면이 멈춘 것처럼 보이므로, 먼저 완료 화면으로 전환
       hideLoading();
       showSuccess(data);
+
+      (async function () {
+        updateSummaryDriveLink_('', '');
+        try {
+          var saved = await withTimeoutMs(
+            performPdfSave(data),
+            180000,
+            '신청서 이미지 저장 시간이 초과되었습니다. (3분)'
+          );
+          window._lastDriveSave = saved;
+          window._lastDriveSaveError = '';
+          updateSummaryDriveLink_(saved && saved.driveUrl ? saved.driveUrl : '', '');
+        } catch (saveErr) {
+          var msg = saveErr && saveErr.message ? saveErr.message : String(saveErr || '');
+          window._lastDriveSaveError = msg;
+          updateSummaryDriveLink_('', msg);
+        } finally {
+          // 저장이 끝난 뒤에만 카운트다운 시작 (30초 만에 새로고침되면 백그라운드 저장이 끊김)
+          startReturnCountdown(30);
+        }
+      })();
     } else {
       throw new Error(json.message || '서버 오류');
     }
@@ -1396,57 +1807,144 @@ function showSuccess(data) {
 
   const scheduleText = data.days.map(d => `${d} ${data.schedule[d]}`).join(', ');
   const amountText   = data.amount === '10000' ? '10,000원 (1회)' : '850,000원 (10회)';
+  const weekLabelTxt = data.startWeekLabel || '';
+  const datesLines = (data.sessionDatesFormatted || []).map(function (s, i) {
+    return `${i + 1}. ${s}`;
+  }).join('<br>');
+  const datesBlock = datesLines
+    ? `<div class="summary-row summary-dates"><span class="s-label">예정 관리일 (${data.sessions})</span><span class="s-val s-dates">${datesLines}</span></div>`
+    : '';
+  const rangeRow = data.sessionRangeText && data.sessions === '10회'
+    ? `<div class="summary-row"><span class="s-label">관리 기간</span><span class="s-val">${data.sessionRangeText}</span></div>`
+    : '';
+  const noteHtml = data.sessionDatesNote
+    ? `<p class="success-note">${data.sessionDatesNote}</p>`
+    : '';
+
+  const submitMeta = window._lastSubmitResult || {};
+  const driveMeta = window._lastDriveSave || {};
+  const driveErr = window._lastDriveSaveError || '';
+  const sheetRow = (typeof submitMeta.memberRow === 'number') ? submitMeta.memberRow : '';
+  const schedWrites = (typeof submitMeta.scheduleWrites === 'number') ? submitMeta.scheduleWrites : '';
+  const misses = Array.isArray(submitMeta.scheduleMisses) ? submitMeta.scheduleMisses : [];
+  const driveUrl = driveMeta.driveUrl || '';
+  const metaBlock = `
+    <div class="summary-row"><span class="s-label">시트 기록</span><span class="s-val">회원정보 ${sheetRow || '-'} / 예약 ${schedWrites || 0}건</span></div>
+    <div class="summary-row"><span class="s-label">신청서 저장</span><span class="s-val"><span id="summaryDriveLink">${driveUrl ? `<a href="${driveUrl}" target="_blank" rel="noopener">드라이브 열기(JPEG)</a>` : '저장 중…'}</span></span></div>
+    ${driveErr && !driveUrl ? `<div class="summary-row"><span class="s-label">저장 실패 원인</span><span class="s-val" style="font-weight:600;color:#444;max-width:70%;text-align:right;white-space:pre-wrap;">${driveErr}</span></div>` : ''}
+    ${misses.length ? `<div class="summary-row"><span class="s-label">예약 실패 원인</span><span class="s-val" style="font-weight:600;color:#444;max-width:70%;text-align:right;white-space:pre-wrap;">${misses.slice(0,3).join('\\n')}</span></div>` : ''}
+  `;
 
   document.getElementById('summaryBox').innerHTML = `
     <div class="summary-row"><span class="s-label">이름</span><span class="s-val">${data.name}</span></div>
     <div class="summary-row"><span class="s-label">담당 강사</span><span class="s-val">${data.instructor}</span></div>
-    <div class="summary-row"><span class="s-label">첫 시작 주간</span><span class="s-val">${document.getElementById('startWeek').options[document.getElementById('startWeek').selectedIndex].text}</span></div>
+    <div class="summary-row"><span class="s-label">첫 시작 주간</span><span class="s-val">${weekLabelTxt}</span></div>
     <div class="summary-row"><span class="s-label">관리 일정</span><span class="s-val">${scheduleText}</span></div>
+    ${rangeRow}
+    ${datesBlock}
     <div class="summary-row"><span class="s-label">결제</span><span class="s-val">${amountText}</span></div>
+    ${metaBlock}
+    ${noteHtml}
   `;
 
   window._submittedData = data;
   window.scrollTo({ top: 0, behavior: 'smooth' });
+  // 「처음으로」카운트다운은 JPEG 저장 완료 후 submitForm 쪽에서 시작합니다.
 }
 
 // ══════════════════════════════════════════════════════
-// 드라이브 저장 (A4 캡처 → GAS 업로드)
+// 드라이브 저장 — 이전 신청서.html 의 captureApplication 과 동일한 html2canvas 설정
+// (scrollHeight 측정 + width/height/windowWidth/windowHeight + scale = Math.max(2, dpr))
+// 이후 JPEG base64 → GAS saveImageToDrive (image/jpeg)
 // ══════════════════════════════════════════════════════
-async function performDriveSave(data) {
+async function performPdfSave(data) {
   buildA4(data);
   await new Promise(function (r) { setTimeout(r, 500); });
 
-  const canvas = await html2canvas(document.getElementById('a4Doc'), {
-    scale: 2, useCORS: true, backgroundColor: '#ffffff'
-  });
-  const imageData = canvas.toDataURL('image/jpeg', 0.92).split(',')[1];
+  var captureArea = document.getElementById('a4Doc');
+  if (!captureArea) throw new Error('A4 문서를 찾을 수 없습니다.');
 
-  const res = await fetch(GAS_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({ action: 'saveDrive', imageData, name: data.name, submittedAt: data.submittedAt }),
-  });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  const json = await res.json();
-  if (json.error) {
-    throw new Error(json.message || String(json.error));
-  }
-  return json;
-}
-
-async function saveToDrive() {
-  const data = window._submittedData;
-  if (!data) return;
-
-  showLoading('신청서를 저장하는 중입니다...');
+  var prevLeft = captureArea.style.left;
+  var prevTop = captureArea.style.top;
+  var prevPosition = captureArea.style.position;
 
   try {
-    await performDriveSave(data);
-    hideLoading();
-  } catch (err) {
-    hideLoading();
-    alert('저장 중 오류: ' + err.message);
+    // 캡처 전 잠시 보이게 해 실제 높이 측정 (이전 신청서.html)
+    captureArea.style.left = '0';
+    captureArea.style.top = '0';
+    captureArea.style.position = 'relative';
+
+    var actualHeight = captureArea.scrollHeight + 50;
+    var actualWidth = 794;
+
+    captureArea.style.left = '-9999px';
+    captureArea.style.position = 'absolute';
+
+    var dpr = window.devicePixelRatio || 1;
+    var scale = Math.max(2, dpr);
+    if (scale > 2.5) scale = 2.5;
+
+    var generatedCanvas = await html2canvas(captureArea, {
+      scale: scale,
+      width: actualWidth,
+      height: actualHeight,
+      windowWidth: actualWidth,
+      windowHeight: actualHeight,
+      backgroundColor: '#ffffff',
+      logging: false,
+      useCORS: true,
+      scrollY: 0,
+      scrollX: 0,
+      y: 0,
+      x: 0,
+    });
+
+    var imageData = generatedCanvas.toDataURL('image/jpeg', 0.92).split(',')[1];
+
+    var res = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        action: 'saveDrive',
+        imageData: imageData,
+        name: data.name,
+        submittedAt: data.submittedAt,
+      }),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    var json = await res.json();
+    if (json.result === 'error' || json.error) {
+      throw new Error(json.message || String(json.error || ''));
+    }
+    return json;
+  } finally {
+    captureArea.style.left = prevLeft || '-9999px';
+    captureArea.style.top = prevTop || '0';
+    captureArea.style.position = prevPosition || 'absolute';
   }
+}
+
+var _returnCountdownTimer = null;
+function startReturnCountdown(sec) {
+  clearInterval(_returnCountdownTimer);
+  var remain = typeof sec === 'number' ? sec : 30;
+  var btn = document.getElementById('returnBtn');
+  function tick() {
+    if (btn) btn.textContent = '처음으로 돌아가기 (' + remain + '초)';
+    if (remain <= 0) {
+      clearInterval(_returnCountdownTimer);
+      returnToStartNow();
+      return;
+    }
+    remain -= 1;
+  }
+  tick();
+  _returnCountdownTimer = setInterval(tick, 1000);
+}
+
+function returnToStartNow() {
+  try { clearInterval(_returnCountdownTimer); } catch (e) {}
+  window.location.reload();
 }
 
 function buildA4(data) {
@@ -1454,7 +1952,14 @@ function buildA4(data) {
     `<tr><td class="lbl">${d}요일</td><td>${data.schedule[d]}</td></tr>`
   ).join('');
   const amountText = data.amount === '10000' ? '90,000원 (1회 이용권)' : '850,000원 (10회 이용권)';
-  const weekLabel  = document.getElementById('startWeek').options[document.getElementById('startWeek').selectedIndex].text;
+  const weekLabel  = data.startWeekLabel || '';
+
+  const sessionRows = (data.sessionDatesFormatted || []).map(function (s, i) {
+    return `<tr><td class="lbl">${i + 1}회차</td><td colspan="3">${s}</td></tr>`;
+  }).join('');
+  const sessionBlock = sessionRows
+    ? `<tr><td class="lbl">예정 관리일</td><td colspan="3">${data.sessionRangeText || ''}</td></tr>${sessionRows}`
+    : '';
 
   document.getElementById('a4Doc').innerHTML = `
     <div class="a4-title">리:얼 커뮤니티센터 회원 신청서</div>
@@ -1463,7 +1968,9 @@ function buildA4(data) {
       <tr><td class="lbl">담당 강사</td><td>${data.instructor}</td><td class="lbl">첫 시작 주간</td><td>${weekLabel}</td></tr>
       <tr><td class="lbl">이용권</td><td colspan="3">${amountText}</td></tr>
       ${scheduleRows}
+      ${sessionBlock}
     </table>
+    ${data.sessionDatesNote ? `<div class="a4-section" style="font-size:11px;color:#555;">${data.sessionDatesNote}</div>` : ''}
     <div class="a4-section">
       <h3>이용 약관 동의</h3>
       1. 관리 전/후 자세 기록용 사진 촬영에 동의합니다.<br>
@@ -1487,14 +1994,65 @@ function showLoading(msg) {
 }
 function hideLoading() {
   document.getElementById('loadingOverlay').classList.remove('active');
+  stopLoadingCountdown();
+}
+
+var _loadingCountdownTimer = null;
+function stopLoadingCountdown() {
+  try { clearInterval(_loadingCountdownTimer); } catch (e) {}
+  _loadingCountdownTimer = null;
+  var el = document.getElementById('loadingCountdown');
+  if (el) el.hidden = true;
+}
+
+function startLoadingCountdown(label, seconds) {
+  stopLoadingCountdown();
+  var remain = Math.max(0, parseInt(seconds || 0, 10) || 0);
+  var title = String(label || '').trim();
+  var textEl = document.getElementById('loadingText');
+  var cdEl = document.getElementById('loadingCountdown');
+  if (cdEl) cdEl.hidden = false;
+
+  function tick() {
+    if (textEl) textEl.textContent = title ? (title + '...') : '처리 중...';
+    if (cdEl) cdEl.textContent = '남은 시간: ' + remain + '초';
+    if (remain <= 0) return;
+    remain -= 1;
+  }
+
+  tick();
+  _loadingCountdownTimer = setInterval(tick, 1000);
 }
 
 // ══════════════════════════════════════════════════════
 // 초기화
 // ══════════════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', () => {
-  buildWeekOptions();
+  generateStartWeekOptions();
   setupPhoneInputs();
+  setupPage1SchedulePrefetch();
+  setupEnterToAdvance();
+
+  const ts = document.getElementById('timeSection');
+  if (ts) {
+    ts.addEventListener('change', function (e) {
+      const t = e.target;
+      if (t && t.name && t.name.indexOf('time_') === 0) {
+        applyScheduleBusyStyles();
+      }
+    });
+  }
+
+  document.querySelectorAll('input[name="instructor"]').forEach(function (r) {
+    r.addEventListener('change', function () {
+      applyScheduleBusyStyles();
+    });
+  });
+
+  fetchScheduleBusy().then(function () {
+    applyScheduleBusyStyles();
+    updateScheduleLegendVisibility();
+  });
 });
 </script>
 </body>
