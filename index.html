@@ -207,10 +207,13 @@ body {
 }
 
 /* 결제 옵션 */
-.pay-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pay-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: stretch; }
 .pay-item input { display: none; }
 .pay-item label {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 132px;
   padding: 20px 16px;
   border: 1.5px solid var(--border);
   border-radius: 14px;
@@ -219,12 +222,23 @@ body {
   background: var(--bg);
 }
 .pay-item label:hover { border-color: var(--teal); }
-.pay-item input:checked + label {
-  background: linear-gradient(135deg, var(--teal), var(--green));
-  border-color: transparent;
-  color: #fff;
-  box-shadow: 0 4px 16px rgba(0,176,155,0.3);
+.pay-badge-spacer {
+  display: block;
+  height: 22px;
+  margin-bottom: 6px;
+  visibility: hidden;
+  font-size: 11px;
+  line-height: 1;
 }
+.pay-item input:checked + label {
+  background: #fff;
+  border: 2px solid var(--teal);
+  color: var(--text);
+  box-shadow: 0 4px 14px rgba(0, 176, 155, 0.16);
+}
+.pay-item input:checked + label .pay-name,
+.pay-item input:checked + label .pay-price { color: var(--teal); }
+.pay-item input:checked + label .pay-desc { color: var(--muted); opacity: 1; }
 .pay-name { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
 .pay-price { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
 .pay-desc { font-size: 12px; opacity: .7; }
@@ -242,7 +256,132 @@ body {
   color: #fff;
 }
 
-/* 주간 선택 */
+/* 프로그램 선택 */
+.program-grid-featured { margin-bottom: 12px; }
+.program-grid-secondary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.program-option input { display: none; }
+.program-option label {
+  display: block;
+  padding: 18px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all .2s;
+  background: var(--bg);
+  text-align: center;
+}
+.program-option label:hover { border-color: var(--teal); }
+.program-option.featured label {
+  padding: 22px 16px;
+  border-width: 2px;
+}
+.program-option.featured label .program-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--teal);
+  background: var(--teal-lt);
+  border-radius: 20px;
+  padding: 3px 10px;
+  margin-bottom: 8px;
+}
+.program-option input:checked + label {
+  background: #fff;
+  border: 2px solid var(--teal);
+  color: var(--text);
+  box-shadow: 0 4px 14px rgba(0, 176, 155, 0.16);
+}
+.program-option input:checked + label .program-name { color: var(--teal); }
+.program-option input:checked + label .program-desc { color: var(--muted); opacity: 1; }
+.program-option input:checked + label .program-badge {
+  color: #fff;
+  background: var(--teal);
+}
+.program-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+.program-desc { font-size: 12px; opacity: .75; line-height: 1.4; }
+
+.pay-branch-block {
+  margin-bottom: 20px;
+  padding: 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg);
+}
+.pay-branch-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+.pay-branch-sub {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  margin: 14px 0 10px;
+}
+.branch-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.branch-option input { display: none; }
+.branch-option label {
+  display: block;
+  padding: 18px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all .2s;
+  background: var(--bg);
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+}
+.branch-option label:hover { border-color: var(--teal); }
+.branch-option input:checked + label {
+  background: linear-gradient(135deg, var(--teal), var(--green));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(0,176,155,0.3);
+}
+
+.duration-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.duration-item input { display: none; }
+.duration-item label {
+  display: block;
+  padding: 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  text-align: center;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--white);
+  transition: all .2s;
+}
+.duration-item input:checked + label {
+  background: linear-gradient(135deg, var(--teal), var(--green));
+  border-color: transparent;
+  color: #fff;
+}
+.pay-grid.pay-grid-4 {
+  grid-template-columns: 1fr 1fr;
+}
+@media (max-width: 520px) {
+  .pay-grid.pay-grid-4 { grid-template-columns: 1fr; }
+  .program-grid-secondary { grid-template-columns: 1fr; }
+}
+
+/* 첫 시작일 */
+.date-input,
 .week-select {
   width: 100%;
   padding: 14px 16px;
@@ -284,37 +423,38 @@ body {
   height: 1px;
   background: var(--border);
 }
-.time-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
-}
-.time-item input { display: none; }
-.time-item label {
+.time-select-row {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 10px 4px;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 12px;
   border: 1.5px solid var(--border);
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
-  transition: all .2s;
+  border-radius: 12px;
   background: var(--bg);
 }
-.time-item label:hover { border-color: var(--teal); }
-.time-item label.slot-busy {
-  border-width: 2px;
-}
-.time-item input:checked + label.slot-busy {
-  box-shadow: inset 0 0 0 2px rgba(255,255,255,.85);
-}
-.time-item input:checked + label {
-  background: linear-gradient(135deg, var(--teal), var(--green));
-  border-color: transparent;
-  color: #fff;
+.time-select-day {
+  width: 36px;
   font-weight: 700;
+  color: var(--teal);
+  text-align: center;
+  flex-shrink: 0;
+}
+.time-select-row select {
+  flex: 1;
+  padding: 12px 10px;
+  min-height: 46px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  background: #fff;
+  color: var(--text);
+  outline: none;
+}
+.time-select-row select:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(0, 176, 155, 0.12);
 }
 .schedule-legend {
   font-size: 12px;
@@ -329,6 +469,8 @@ body {
 
 /* 강사 선택 */
 .instructor-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.instructor-grid.instructor-grid--two { grid-template-columns: repeat(2, 1fr); }
+.inst-item[hidden] { display: none !important; }
 .inst-item input { display: none; }
 .inst-item label {
   display: flex;
@@ -345,11 +487,12 @@ body {
 }
 .inst-item label:hover { border-color: var(--teal); background: var(--teal-lt); }
 .inst-item input:checked + label {
-  background: linear-gradient(135deg, var(--teal), var(--green));
-  border-color: transparent;
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(0,176,155,0.3);
+  background: #fff;
+  border: 2px solid var(--teal);
+  color: var(--text);
+  box-shadow: 0 4px 12px rgba(0, 176, 155, 0.16);
 }
+.inst-item input:checked + label .inst-name { color: var(--teal); }
 .inst-icon { font-size: 24px; margin-bottom: 6px; }
 .inst-name { font-size: 14px; font-weight: 700; }
 
@@ -680,46 +823,98 @@ body {
       <div class="step-dot" id="dot3b">3</div>
     </div>
 
-    <div class="section-title">일정 선택</div>
-    <div class="section-sub">관리 시작 주간, 요일, 시간을 선택해주세요.</div>
+    <div class="section-title">프로그램 · 일정</div>
+    <div class="section-sub">지점, 프로그램, 강사, 시작일, 요일·시간, 이용권을 선택해주세요.</div>
 
-    <!-- 시작 주간 -->
+    <!-- 1. 지점 -->
     <div class="form-group">
-      <label class="form-label">첫 시작 주간 선택 <span class="req">*</span></label>
-      <select class="week-select" id="startWeek" onchange="onStartWeekChange()">
-        <option value="">선택하세요</option>
-      </select>
+      <label class="form-label">지점 선택 <span class="req">*</span></label>
+      <div class="branch-grid">
+        <div class="branch-option">
+          <input type="radio" name="storeBranch" id="branchYaksu" value="약수" checked onchange="onStoreBranchChange()">
+          <label for="branchYaksu">서울 약수점</label>
+        </div>
+        <div class="branch-option">
+          <input type="radio" name="storeBranch" id="branchIncheon" value="인천" onchange="onStoreBranchChange()">
+          <label for="branchIncheon">인천 작전점</label>
+        </div>
+      </div>
     </div>
 
-    <!-- 담당 강사 -->
+    <!-- 2. 프로그램 -->
+    <div class="form-group">
+      <label class="form-label">프로그램 선택 <span class="req">*</span></label>
+      <div class="program-grid-featured">
+        <div class="program-option featured">
+          <input type="radio" name="program" id="progFunc" value="기능 운동" checked>
+          <label for="progFunc">
+            <span class="program-badge">대표 프로그램</span>
+            <div class="program-name">기능 운동</div>
+            <div class="program-desc">자세교정 · 기능운동</div>
+          </label>
+        </div>
+      </div>
+      <div class="program-grid-secondary">
+        <div class="program-option">
+          <input type="radio" name="program" id="progStretch" value="P-스트레칭">
+          <label for="progStretch">
+            <div class="program-name">P-스트레칭</div>
+            <div class="program-desc">셀프 통증관리 · 맞춤 스트레칭</div>
+          </label>
+        </div>
+        <div class="program-option">
+          <input type="radio" name="program" id="progFace" value="작은얼굴">
+          <label for="progFace">
+            <div class="program-name">작은얼굴</div>
+            <div class="program-desc">얼굴 라인 · 페이셜 케어</div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. 담당 강사 -->
     <div class="form-group">
       <label class="form-label">담당 강사 <span class="req">*</span></label>
       <div class="instructor-grid" id="instructorGrid">
-        <div class="inst-item">
-          <input type="radio" name="instructor" id="inst1" value="박준규">
+        <div class="inst-item" data-branches="약수,인천">
+          <input type="radio" name="instructor" id="inst1" value="박준규" checked>
           <label for="inst1">
             <div class="inst-icon">👤</div>
             <div class="inst-name">박준규 원장</div>
           </label>
         </div>
-        <div class="inst-item">
+        <div class="inst-item" data-branches="약수">
           <input type="radio" name="instructor" id="inst2" value="최진옥">
           <label for="inst2">
             <div class="inst-icon">👤</div>
             <div class="inst-name">최진옥 원장</div>
           </label>
         </div>
-        <div class="inst-item">
+        <div class="inst-item" data-branches="약수">
           <input type="radio" name="instructor" id="inst3" value="강사3">
           <label for="inst3">
             <div class="inst-icon">👤</div>
             <div class="inst-name">강사 3</div>
           </label>
         </div>
+        <div class="inst-item" data-branches="인천" hidden>
+          <input type="radio" name="instructor" id="instIncheon1" value="강사1">
+          <label for="instIncheon1">
+            <div class="inst-icon">👤</div>
+            <div class="inst-name">강사 1</div>
+          </label>
+        </div>
       </div>
     </div>
 
-    <!-- 관리 요일 -->
+    <!-- 4. 첫 시작일 -->
+    <div class="form-group">
+      <label class="form-label">첫 시작일 <span class="req">*</span></label>
+      <input type="date" class="date-input" id="startDate" onchange="onStartDateChange()">
+      <input type="hidden" id="startWeek" value="">
+    </div>
+
+    <!-- 4. 관리 요일 -->
     <div class="form-group">
       <label class="form-label">관리 요일 <span class="req">*</span> <small style="color:var(--muted);font-weight:400;">(복수 선택 가능)</small></label>
       <div class="choice-grid" id="dayGrid">
@@ -752,34 +947,72 @@ body {
 
     <!-- 요일별 시간 (동적 생성) -->
     <div class="form-group" id="timeSection" style="display:none;">
-      <label class="form-label">관리 시간 <span class="req">*</span></label>
+      <label class="form-label">⏰ 요일별 관리 시간 <span class="req">*</span></label>
       <div id="timePickersWrap"></div>
       <p id="scheduleBusyLegend" class="schedule-legend" hidden>
         <strong>색 표시</strong> 구글 시트에 이미 예약된 시간입니다. 강사별 색은 스케줄표와 동일합니다. 세로로 여러 색이 겹치면 강사별로 예약이 함께 있는 경우입니다.
       </p>
     </div>
 
-    <!-- 결제 -->
+    <!-- 6. 이용권 -->
     <div class="form-group">
       <label class="form-label">이용권 선택 <span class="req">*</span></label>
-      <div class="pay-grid">
-        <div class="pay-item">
-          <input type="radio" name="payment" id="pay1" value="1회|90000">
-          <label for="pay1">
-            <div class="pay-name">1회 이용권</div>
-            <div class="pay-price">90,000원</div>
-            <div class="pay-desc">단건 이용</div>
-          </label>
+
+      <div class="pay-branch-block" id="yaksuPayBlock">
+        <div class="pay-branch-title">서울 약수점</div>
+        <div class="pay-grid pay-grid-4">
+          <div class="pay-item">
+            <input type="radio" name="payment" id="payYs1" value="약수|1회|85000">
+            <label for="payYs1">
+              <span class="pay-badge-spacer" aria-hidden="true">·</span>
+              <div class="pay-name">1회 이용권</div>
+              <div class="pay-price">85,000원</div>
+              <div class="pay-desc">단건 이용</div>
+            </label>
+          </div>
+          <div class="pay-item">
+            <input type="radio" name="payment" id="payYs4" value="약수|4회|323000">
+            <label for="payYs4">
+              <span class="pay-badge">5% 할인</span>
+              <div class="pay-name">4회 이용권</div>
+              <div class="pay-price">323,000원</div>
+              <div class="pay-desc">회당 80,750원</div>
+            </label>
+          </div>
+          <div class="pay-item">
+            <input type="radio" name="payment" id="payYs8" value="약수|8회|612000">
+            <label for="payYs8">
+              <span class="pay-badge">추천</span>
+              <div class="pay-name">8회 이용권</div>
+              <div class="pay-price">612,000원</div>
+              <div class="pay-desc">10% 할인 · 회당 76,500원</div>
+            </label>
+          </div>
+          <div class="pay-item">
+            <input type="radio" name="payment" id="payYs24" value="약수|24회|1734000">
+            <label for="payYs24">
+              <span class="pay-badge">15% 할인</span>
+              <div class="pay-name">24회 이용권</div>
+              <div class="pay-price">1,734,000원</div>
+              <div class="pay-desc">회당 72,250원</div>
+            </label>
+          </div>
         </div>
-        <div class="pay-item">
-          <input type="radio" name="payment" id="pay2" value="10회|850000">
-          <label for="pay2">
-            <span class="pay-badge">추천 · 15% 할인</span>
-            <div class="pay-name">10회 이용권</div>
-            <div class="pay-price">850,000원</div>
-            <div class="pay-desc">회당 85,000원</div>
-          </label>
+      </div>
+
+      <div class="pay-branch-block" id="incheonPayBlock" hidden>
+        <div class="pay-branch-title">인천 작전점</div>
+        <div class="duration-grid">
+          <div class="duration-item">
+            <input type="radio" name="careDuration" id="care50" value="50" checked onchange="onCareDurationChange()">
+            <label for="care50">50분 관리</label>
+          </div>
+          <div class="duration-item">
+            <input type="radio" name="careDuration" id="care80" value="80" onchange="onCareDurationChange()">
+            <label for="care80">80분 관리</label>
+          </div>
         </div>
+        <div class="pay-grid pay-grid-4" id="incheonPayGrid"></div>
       </div>
     </div>
 
@@ -897,10 +1130,18 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbwVJSc6rY5tcBSB1VaRi4DB
 /** code.gs CONFIG.TIME_SLOTS 과 동일하게 유지 (시트 행과 매칭) */
 const TIME_SLOTS = [
   '9:00','9:30','10:00','10:30','11:00','11:30',
-  '12:00','12:30',
-  '13:30','14:00','14:30','15:00','15:30',
+  '12:00','12:30','13:00','13:30',
+  '14:00','14:30','15:00','15:30',
   '16:00','16:30','17:00','17:30','18:00','18:30',
   '19:00','19:30','20:00','20:30','21:00'
+];
+
+const TIME_HOUR_OPTIONS = [
+  { v: '07', l: '오전 7시' }, { v: '08', l: '오전 8시' }, { v: '09', l: '오전 9시' },
+  { v: '10', l: '오전 10시' }, { v: '11', l: '오전 11시' }, { v: '12', l: '오후 12시' },
+  { v: '13', l: '오후 1시' }, { v: '14', l: '오후 2시' }, { v: '15', l: '오후 3시' },
+  { v: '16', l: '오후 4시' }, { v: '17', l: '오후 5시' }, { v: '18', l: '오후 6시' },
+  { v: '19', l: '오후 7시' }, { v: '20', l: '오후 8시' }, { v: '21', l: '오후 9시' },
 ];
 
 const DAYS_ORDER = ['월','화','수','목','금','토'];
@@ -937,36 +1178,148 @@ function formatDateForDB(date) {
   return `${y}-${m}-${day}`;
 }
 
-function generateStartWeekOptions() {
-  const select = document.getElementById('startWeek');
-  if (!select) return;
+const INCHEON_PAY = {
+  '50': {
+    single1: { sessions: '1회', name: '1회 이용권', badge: '', total: 45000, per: 45000 },
+    weekly1: { sessions: '4회', name: '4회 이용권', badge: '추천', total: 170000, per: 42500 },
+    weekly2: { sessions: '8회', name: '8회 이용권 (주 2회)', badge: '10% 할인', total: 320000, per: 40000 },
+    month3: { sessions: '24회', name: '24회 이용권', badge: '장기 할인', total: 900000, per: 37500 },
+  },
+  '80': {
+    single1: { sessions: '1회', name: '1회 이용권', badge: '', total: 85000, per: 85000 },
+    weekly1: { sessions: '4회', name: '4회 이용권', badge: '추천', total: 320000, per: 80000 },
+    weekly2: { sessions: '8회', name: '8회 이용권 (주 2회)', badge: '10% 할인', total: 600000, per: 75000 },
+    month3: { sessions: '24회', name: '24회 이용권', badge: '장기 할인', total: 1680000, per: 70000 },
+  },
+};
 
-  select.innerHTML = '';
-  const ph = document.createElement('option');
-  ph.value = '';
-  ph.textContent = '선택하세요';
-  select.appendChild(ph);
+function parseSessionCount(sessionsLabel) {
+  const m = String(sessionsLabel || '').match(/(\d+)/);
+  return m ? parseInt(m[1], 10) : 1;
+}
 
-  const today = new Date();
-  const currentMonday = getCurrentWeekMonday(today);
+function formatStartDateLabel(ymd) {
+  const d = parseYMD(ymd);
+  if (!d) return ymd || '';
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} (${JS_TO_KOR[d.getDay()]})`;
+}
 
-  const startDate = new Date(currentMonday);
-  const endDate = new Date(currentMonday);
-  endDate.setDate(endDate.getDate() + 7 * 6);
-
-  let tempDate = new Date(startDate);
-  while (tempDate <= endDate) {
-    const month = tempDate.getMonth() + 1;
-    const weekOfMonth = getWeekOfMonth(tempDate);
-    const dateStr = `${month}/${tempDate.getDate()}`;
-    const option = document.createElement('option');
-    option.value = formatDateForDB(tempDate);
-    option.textContent = `${month}월 ${weekOfMonth}주차 (${dateStr}일 이후)`;
-    select.appendChild(option);
-    tempDate.setDate(tempDate.getDate() + 7);
+function formatPaymentDisplay(data) {
+  const n = Number(String(data.amount || '').replace(/\D/g, '')) || 0;
+  const amt = n.toLocaleString() + '원';
+  const sess = data.sessions || '';
+  if (data.branch === '인천') {
+    return amt + ' (' + (data.careDuration || '') + '분 · ' + sess + ')';
   }
+  return amt + ' (' + sess + ')';
+}
 
-  if (select.options.length > 1) select.selectedIndex = 1;
+function initStartDateInput() {
+  const inp = document.getElementById('startDate');
+  if (!inp) return;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  inp.min = formatDateForDB(today);
+  const max = new Date(today);
+  max.setDate(max.getDate() + 90);
+  inp.max = formatDateForDB(max);
+  if (!inp.value) inp.value = inp.min;
+  onStartDateChange();
+}
+
+function syncStartWeekFromDate() {
+  const sd = document.getElementById('startDate');
+  const sw = document.getElementById('startWeek');
+  if (!sd || !sw) return;
+  const d = parseYMD(sd.value);
+  sw.value = d ? formatDateForDB(getCurrentWeekMonday(d)) : '';
+}
+
+function onStartDateChange() {
+  syncStartWeekFromDate();
+  updateWeekDates();
+  fetchScheduleBusy().then(function () {
+    applyScheduleBusyStyles();
+    updateScheduleLegendVisibility();
+  });
+}
+
+function onStartWeekChange() {
+  onStartDateChange();
+}
+
+function renderIncheonPayGrid() {
+  const grid = document.getElementById('incheonPayGrid');
+  if (!grid) return;
+  const dur = document.querySelector('input[name="careDuration"]:checked');
+  const mins = dur ? dur.value : '50';
+  const packs = INCHEON_PAY[mins] || INCHEON_PAY['50'];
+  const keys = ['single1', 'weekly1', 'weekly2', 'month3'];
+  const checkedVal = document.querySelector('input[name="payment"]:checked');
+  const checkedWas = checkedVal ? checkedVal.value : '';
+  grid.innerHTML = '';
+  keys.forEach(function (key, idx) {
+    const p = packs[key];
+    const val = '인천|' + mins + '|' + p.sessions + '|' + p.total;
+    const id = 'payIc_' + mins + '_' + key;
+    const item = document.createElement('div');
+    item.className = 'pay-item';
+    item.innerHTML =
+      '<input type="radio" name="payment" id="' + id + '" value="' + val + '">' +
+      '<label for="' + id + '">' +
+      (p.badge ? '<span class="pay-badge">' + p.badge + '</span>' : '<span class="pay-badge-spacer" aria-hidden="true">·</span>') +
+      '<div class="pay-name">' + p.name + '</div>' +
+      '<div class="pay-price">' + p.total.toLocaleString() + '원</' + 'div>' +
+      '<div class="pay-desc">회당 ' + p.per.toLocaleString() + '원</div>' +
+      '</label>';
+    grid.appendChild(item);
+  });
+  if (checkedWas && checkedWas.indexOf('인천|') === 0) {
+    const parts = checkedWas.split('|');
+    if (parts[1] === mins) {
+      const match = grid.querySelector('input[value="' + checkedWas.replace(/"/g, '\\"') + '"]');
+      if (match) match.checked = true;
+    }
+  }
+}
+
+function getStoreBranch() {
+  return document.querySelector('input[name="storeBranch"]:checked')?.value || '약수';
+}
+
+function onStoreBranchChange() {
+  const branch = getStoreBranch();
+  const yaksu = document.getElementById('yaksuPayBlock');
+  const incheon = document.getElementById('incheonPayBlock');
+  const grid = document.getElementById('instructorGrid');
+
+  if (yaksu) yaksu.hidden = branch !== '약수';
+  if (incheon) incheon.hidden = branch !== '인천';
+  if (grid) grid.classList.toggle('instructor-grid--two', branch === '인천');
+
+  document.querySelectorAll('#instructorGrid .inst-item').forEach(function (item) {
+    const allowed = (item.getAttribute('data-branches') || '약수').split(',').map(function (x) { return x.trim(); });
+    const show = allowed.indexOf(branch) !== -1;
+    item.hidden = !show;
+    if (!show) {
+      const inp = item.querySelector('input[name="instructor"]');
+      if (inp && inp.checked) inp.checked = false;
+    }
+  });
+
+  document.querySelectorAll('input[name="payment"]').forEach(function (inp) {
+    if (!inp.checked) return;
+    const v = inp.value;
+    if (branch === '약수' && v.indexOf('인천|') === 0) inp.checked = false;
+    if (branch === '인천' && v.indexOf('약수|') === 0) inp.checked = false;
+  });
+
+  applyScheduleBusyStyles();
+}
+function onCareDurationChange() {
+  const prev = document.querySelector('input[name="payment"]:checked');
+  if (prev && prev.value.indexOf('인천|') === 0) prev.checked = false;
+  renderIncheonPayGrid();
 }
 
 function parseYMD(s) {
@@ -982,30 +1335,23 @@ function parseYMD(s) {
 /**
  * 첫 시작 주간(월요일)부터, 선택 요일을 주 단위로 반복하여 회차별 후보 날짜(공휴일 미반영).
  */
-function computeSessionDatesRaw(startWeekValue, daysOrdered, sessionsLabel) {
-  const totalSessions = sessionsLabel === '10회' ? 10 : 1;
-  if (!startWeekValue || !daysOrdered || daysOrdered.length === 0) return [];
+function computeSessionDatesRaw(startAnchorYmd, daysOrdered, sessionsLabel) {
+  const totalSessions = parseSessionCount(sessionsLabel);
+  if (!startAnchorYmd || !daysOrdered || daysOrdered.length === 0) return [];
 
-  const monday = parseYMD(startWeekValue);
-  if (!monday || isNaN(monday.getTime())) return [];
-  monday.setHours(0, 0, 0, 0);
+  const anchor = parseYMD(startAnchorYmd);
+  if (!anchor || isNaN(anchor.getTime())) return [];
+  anchor.setHours(0, 0, 0, 0);
 
-  const sortedDays = daysOrdered.slice().sort(function (a, b) {
-    return DAY_MAP_KO_TO_JS[a] - DAY_MAP_KO_TO_JS[b];
-  });
-
+  const allowed = new Set(daysOrdered);
   const out = [];
-  let week = 0;
-  while (out.length < totalSessions) {
-    for (let i = 0; i < sortedDays.length; i++) {
-      if (out.length >= totalSessions) break;
-      const kor = sortedDays[i];
-      const off = DAY_MAP_KO_TO_JS[kor] - 1;
-      const dt = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate());
-      dt.setDate(dt.getDate() + week * 7 + off);
-      out.push(dt);
+  let d = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate());
+  let guard = 0;
+  while (out.length < totalSessions && guard++ < 500) {
+    if (allowed.has(JS_TO_KOR[d.getDay()])) {
+      out.push(new Date(d.getFullYear(), d.getMonth(), d.getDate()));
     }
-    week++;
+    d.setDate(d.getDate() + 1);
   }
   return out;
 }
@@ -1042,8 +1388,8 @@ function adjustSessionsForHolidays(rawDates, holidaySet, sortedKorDays) {
  * 예정 관리일. holidaySet이 비어 있으면 공휴일 미반영.
  * 공휴일이 포함된 경우: 선택한 요일 중 하나이면서 공휴일이 아닌 가장 가까운 날로 연기.
  */
-function computeSessionDates(startWeekValue, daysOrdered, sessionsLabel, holidaySet) {
-  const raw = computeSessionDatesRaw(startWeekValue, daysOrdered, sessionsLabel);
+function computeSessionDates(startAnchorYmd, daysOrdered, sessionsLabel, holidaySet) {
+  const raw = computeSessionDatesRaw(startAnchorYmd, daysOrdered, sessionsLabel);
   if (!holidaySet || holidaySet.size === 0) return raw;
   const sortedDays = daysOrdered.slice().sort(function (a, b) {
     return DAY_MAP_KO_TO_JS[a] - DAY_MAP_KO_TO_JS[b];
@@ -1051,18 +1397,18 @@ function computeSessionDates(startWeekValue, daysOrdered, sessionsLabel, holiday
   return adjustSessionsForHolidays(raw, holidaySet, sortedDays);
 }
 
-function yearsSpanForSchedule(startWeekValue, sessionsLabel) {
+function yearsSpanForSchedule(startAnchorYmd, sessionsLabel) {
   const yset = new Set();
   const yNow = new Date().getFullYear();
   yset.add(yNow);
   yset.add(yNow + 1);
   yset.add(yNow + 2);
-  const mon = parseYMD(startWeekValue);
-  if (mon && !isNaN(mon.getTime())) {
-    const extra = sessionsLabel === '10회' ? 10 : 2;
-    const end = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate());
+  const anchor = parseYMD(startAnchorYmd);
+  if (anchor && !isNaN(anchor.getTime())) {
+    const extra = parseSessionCount(sessionsLabel) + 2;
+    const end = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate());
     end.setDate(end.getDate() + extra * 7);
-    for (let y = mon.getFullYear(); y <= end.getFullYear(); y++) yset.add(y);
+    for (let y = anchor.getFullYear(); y <= end.getFullYear(); y++) yset.add(y);
   }
   return Array.from(yset).sort(function (a, b) { return a - b; });
 }
@@ -1154,8 +1500,9 @@ var _schedulePrefetchTimer = null;
 function scheduleScheduleBusyPrefetch() {
   clearTimeout(_schedulePrefetchTimer);
   _schedulePrefetchTimer = setTimeout(function () {
-    var sw = document.getElementById('startWeek');
+    var sw = document.getElementById('startDate');
     if (!sw || !sw.value) return;
+    syncStartWeekFromDate();
     fetchScheduleBusy().then(applyScheduleBusyIfVisible);
   }, 400);
 }
@@ -1174,16 +1521,43 @@ function isSlotBookedForInstructor(ymd, timeStr, instructorName) {
 }
 
 // ══════════════════════════════════════════════════════
-// 요일별 시간 피커 동적 생성
+// 요일별 시간 피커 (시간 / 분 선택)
 // ══════════════════════════════════════════════════════
+function formatTimeSlotFromSelect(hourVal, minuteVal) {
+  if (!hourVal) return '';
+  const h = parseInt(hourVal, 10);
+  const m = minuteVal === '30' ? '30' : '00';
+  const slot = h + ':' + m;
+  if (TIME_SLOTS.indexOf(slot) !== -1) return slot;
+  for (let i = 0; i < TIME_SLOTS.length; i++) {
+    if (TIME_SLOTS[i].indexOf(h + ':') === 0) return TIME_SLOTS[i];
+  }
+  return slot;
+}
+
+function getTimeForDay(day) {
+  const hourSel = document.querySelector('.time-hour[data-day="' + day + '"]');
+  const minSel = document.querySelector('.time-minute[data-day="' + day + '"]');
+  if (!hourSel || !hourSel.value) return '';
+  return formatTimeSlotFromSelect(hourSel.value, minSel ? minSel.value : '00');
+}
+
 function buildTimePickers() {
-  const selectedDays = DAYS_ORDER.filter(d => {
-    const el = document.querySelector(`#dayGrid input[value="${d}"]`);
+  const selectedDays = DAYS_ORDER.filter(function (d) {
+    const el = document.querySelector('#dayGrid input[value="' + d + '"]');
     return el && el.checked;
   });
 
   const wrap = document.getElementById('timePickersWrap');
-  const sec  = document.getElementById('timeSection');
+  const sec = document.getElementById('timeSection');
+  if (!wrap || !sec) return;
+
+  const existing = {};
+  wrap.querySelectorAll('.time-hour').forEach(function (sel) {
+    const day = sel.dataset.day;
+    const minSel = wrap.querySelector('.time-minute[data-day="' + day + '"]');
+    existing[day] = { hour: sel.value, minute: minSel ? minSel.value : '00' };
+  });
 
   wrap.innerHTML = '';
 
@@ -1194,40 +1568,39 @@ function buildTimePickers() {
 
   sec.style.display = 'block';
 
-  selectedDays.forEach(day => {
-    const weekVal  = document.getElementById('startWeek').value;
-    let   dateStr  = '';
+  selectedDays.forEach(function (day) {
+    const prev = existing[day] || { hour: '', minute: '00' };
 
-    if (weekVal) {
-      const monday = parseYMD(weekVal);
-      if (monday) {
-        const off = DAY_MAP_KO_TO_JS[day] - 1;
-        const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate());
-        d.setDate(d.getDate() + off);
-        dateStr = ` (${fmtDate(d)})`;
-      }
-    }
+    const row = document.createElement('div');
+    row.className = 'time-select-row';
 
-    const label = document.createElement('div');
-    label.className = 'time-day-label';
-    label.textContent = day + '요일' + dateStr;
-    wrap.appendChild(label);
+    const dayLabel = document.createElement('div');
+    dayLabel.className = 'time-select-day';
+    dayLabel.textContent = day;
+    row.appendChild(dayLabel);
 
-    const grid = document.createElement('div');
-    grid.className = 'time-grid';
-
-    TIME_SLOTS.forEach((t, i) => {
-      const id = `time_${day}_${i}`;
-      const item = document.createElement('div');
-      item.className = 'time-item';
-      item.innerHTML = `
-        <input type="radio" name="time_${day}" id="${id}" value="${t}">
-        <label for="${id}">${t}</label>
-      `;
-      grid.appendChild(item);
+    const hourSel = document.createElement('select');
+    hourSel.className = 'time-hour';
+    hourSel.dataset.day = day;
+    hourSel.innerHTML = '<option value="">시간 선택</option>';
+    TIME_HOUR_OPTIONS.forEach(function (opt) {
+      const o = document.createElement('option');
+      o.value = opt.v;
+      o.textContent = opt.l;
+      if (prev.hour === opt.v) o.selected = true;
+      hourSel.appendChild(o);
     });
+    row.appendChild(hourSel);
 
-    wrap.appendChild(grid);
+    const minSel = document.createElement('select');
+    minSel.className = 'time-minute';
+    minSel.dataset.day = day;
+    minSel.innerHTML =
+      '<option value="00"' + (prev.minute === '00' || !prev.minute ? ' selected' : '') + '>00분</option>' +
+      '<option value="30"' + (prev.minute === '30' ? ' selected' : '') + '>30분</option>';
+    row.appendChild(minSel);
+
+    wrap.appendChild(row);
   });
 
   applyScheduleBusyStyles();
@@ -1370,6 +1743,7 @@ async function goPage(n) {
   if (n === 2 && !validatePage1()) return;
   // 1→2 이동은 GAS 대기 없이 즉시 전환 (startWeek 기본값 때문에 fetch가 걸리면 다음이 안 넘어가는 문제 방지)
   if (n === 2) {
+    onStoreBranchChange();
     fetchScheduleBusy().then(function () {
       applyScheduleBusyStyles();
       updateScheduleLegendVisibility();
@@ -1413,12 +1787,16 @@ function validatePage1() {
 }
 
 function validatePage2() {
-  if (!document.getElementById('startWeek').value) {
-    alert('첫 시작 주간을 선택해주세요.'); return false;
+  if (!document.querySelector('input[name="program"]:checked')) {
+    alert('프로그램을 선택해주세요.'); return false;
   }
-  if (!document.querySelector('input[name="instructor"]:checked')) {
+  if (!document.querySelector('#instructorGrid .inst-item:not([hidden]) input[name="instructor"]:checked')) {
     alert('담당 강사를 선택해주세요.'); return false;
   }
+  if (!document.getElementById('startDate').value) {
+    alert('첫 시작일을 선택해주세요.'); return false;
+  }
+  syncStartWeekFromDate();
   const days = DAYS_ORDER.filter(d => {
     const el = document.querySelector(`#dayGrid input[value="${d}"]`);
     return el && el.checked;
@@ -1427,7 +1805,7 @@ function validatePage2() {
 
   let allTimePicked = true;
   days.forEach(d => {
-    if (!document.querySelector(`input[name="time_${d}"]:checked`)) {
+    if (!getTimeForDay(d)) {
       allTimePicked = false;
     }
   });
@@ -1435,7 +1813,8 @@ function validatePage2() {
 
   // 예약현황 중복 검사 비활성화 (페이지 이동/신청을 막지 않도록)
 
-  if (!document.querySelector('input[name="payment"]:checked')) {
+  const payRoot = getStoreBranch() === '약수' ? '#yaksuPayBlock' : '#incheonPayBlock';
+  if (!document.querySelector(payRoot + ' input[name="payment"]:checked')) {
     alert('이용권을 선택해주세요.'); return false;
   }
   return true;
@@ -1646,28 +2025,43 @@ function getSigDataURL() {
 // ══════════════════════════════════════════════════════
 // 데이터 수집
 // ══════════════════════════════════════════════════════
-function collectData() {
+function collectData(opts) {
+  opts = opts || {};
   const days = DAYS_ORDER.filter(d => {
     const el = document.querySelector(`#dayGrid input[value="${d}"]`);
     return el && el.checked;
   });
   const schedule = {};
   days.forEach(d => {
-    const t = document.querySelector(`input[name="time_${d}"]:checked`);
-    schedule[d] = t ? t.value : '';
+    schedule[d] = getTimeForDay(d);
   });
 
+  const storeBranch = getStoreBranch();
   const payVal = document.querySelector('input[name="payment"]:checked')?.value || '';
-  const [sessions, amount] = payVal.split('|');
+  const payParts = payVal.split('|');
+  let branch = '';
+  let sessions = '';
+  let amount = '';
+  let careDuration = '';
+  if (payParts[0] === '약수') {
+    branch = '약수';
+    sessions = payParts[1] || '';
+    amount = payParts[2] || '';
+  } else if (payParts[0] === '인천') {
+    branch = '인천';
+    careDuration = payParts[1] || '';
+    sessions = payParts[2] || '';
+    amount = payParts[3] || '';
+  }
+  if (!branch) branch = storeBranch;
 
+  const startDateVal = document.getElementById('startDate').value;
+  syncStartWeekFromDate();
   const weekVal = document.getElementById('startWeek').value;
-  const weekSel = document.getElementById('startWeek');
-  const weekLabel = weekSel && weekSel.selectedIndex >= 0
-    ? weekSel.options[weekSel.selectedIndex].text
-    : '';
+  const startLabel = formatStartDateLabel(startDateVal);
 
   const hol = window._holidaySet || new Set();
-  const sessionDTs = computeSessionDates(weekVal, days, sessions, hol);
+  const sessionDTs = computeSessionDates(startDateVal, days, sessions, hol);
   const sessionDatesFormatted = sessionDTs.map(formatSessionDateKo);
   const sessionRangeText = sessionDatesFormatted.length >= 2
     ? `${sessionDatesFormatted[0]} ~ ${sessionDatesFormatted[sessionDatesFormatted.length - 1]}`
@@ -1679,14 +2073,19 @@ function collectData() {
   return {
     name:        document.getElementById('name').value.trim(),
     phone:       getPhoneDigits(),
+    program:     document.querySelector('input[name="program"]:checked')?.value || '',
     instructor:  document.querySelector('input[name="instructor"]:checked')?.value || '',
+    startDate:   startDateVal,
     startWeek:   weekVal,
-    startWeekLabel: weekLabel,
+    startWeekLabel: startLabel,
+    storeBranch: storeBranch,
+    branch:      branch,
+    careDuration: careDuration,
     days:        days,
-    schedule:    schedule,   // { 월: '10:00', 수: '14:00', ... }
-    sessions:    sessions,   // '1회' or '10회'
-    amount:      amount,     // '10000' or '850000'
-    signature:   getSigDataURL(),
+    schedule:    schedule,
+    sessions:    sessions,
+    amount:      amount,
+    signature:   opts.includeSignature === false ? '' : getSigDataURL(),
     submittedAt: new Date().toISOString(),
     sessionDatesFormatted,
     sessionRangeText,
@@ -1733,6 +2132,48 @@ function updateSummaryDriveLink_(url, errMsg) {
   el.textContent = '저장 중…';
 }
 
+/** 시트 저장 후: 알림톡·드라이브 JPEG (완료 화면은 이미 표시된 상태) */
+function runPostSubmitBackground_(data) {
+  fetch(GAS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({
+      action: 'sendConfirmAlimtalk',
+      phone: data.phone,
+      days: data.days,
+      schedule: data.schedule,
+      startWeek: data.startWeek,
+      startDate: data.startDate,
+      amount: data.amount,
+      sessions: data.sessions,
+      branch: data.branch,
+      careDuration: data.careDuration,
+    }),
+  }).catch(function (err) {
+    console.warn('예약 알림톡 백그라운드 실패:', err);
+  });
+
+  (async function () {
+    updateSummaryDriveLink_('', '');
+    try {
+      var saved = await withTimeoutMs(
+        performPdfSave(data),
+        180000,
+        '신청서 이미지 저장 시간이 초과되었습니다. (3분)'
+      );
+      window._lastDriveSave = saved;
+      window._lastDriveSaveError = '';
+      updateSummaryDriveLink_(saved && saved.driveUrl ? saved.driveUrl : '', '');
+    } catch (saveErr) {
+      var msg = saveErr && saveErr.message ? saveErr.message : String(saveErr || '');
+      window._lastDriveSaveError = msg;
+      updateSummaryDriveLink_('', msg);
+    } finally {
+      startReturnCountdown(30);
+    }
+  })();
+}
+
 async function submitForm() {
   if (!document.getElementById('agree1').checked ||
       !document.getElementById('agree2').checked) {
@@ -1742,22 +2183,27 @@ async function submitForm() {
     alert('서명을 해주세요.'); return;
   }
 
-  // 공휴일 조회는 제출 흐름에서 제외 (지연/404로 인해 신청 완료가 흔들리는 문제 방지)
   window._holidaySet = new Set();
-  const data = collectData();
+  const data = collectData({ includeSignature: false });
+  data.signature = getSigDataURL();
 
-  showLoading('신청서를 접수하는 중입니다');
-  startLoadingCountdown('신청서를 접수하는 중입니다', 10);
+  var submitBody = {};
+  Object.keys(data).forEach(function (k) {
+    if (k !== 'signature') submitBody[k] = data[k];
+  });
+
+  showLoading('시트에 기록하는 중입니다…');
+  startLoadingCountdown('시트에 기록하는 중입니다…', 10);
 
   try {
     var res = await withTimeoutMs(
       fetch(GAS_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(submitBody),
       }),
-      120000,
-      '서버 응답이 너무 오래 걸립니다. 잠시 후 다시 시도해 주세요.'
+      90000,
+      '시트 기록이 너무 오래 걸립니다. 잠시 후 다시 시도해 주세요.'
     );
     var json = await res.json();
     window._lastSubmitResult = json;
@@ -1771,26 +2217,7 @@ async function submitForm() {
       hideLoading();
       showSuccess(data);
 
-      (async function () {
-        updateSummaryDriveLink_('', '');
-        try {
-          var saved = await withTimeoutMs(
-            performPdfSave(data),
-            180000,
-            '신청서 이미지 저장 시간이 초과되었습니다. (3분)'
-          );
-          window._lastDriveSave = saved;
-          window._lastDriveSaveError = '';
-          updateSummaryDriveLink_(saved && saved.driveUrl ? saved.driveUrl : '', '');
-        } catch (saveErr) {
-          var msg = saveErr && saveErr.message ? saveErr.message : String(saveErr || '');
-          window._lastDriveSaveError = msg;
-          updateSummaryDriveLink_('', msg);
-        } finally {
-          // 저장이 끝난 뒤에만 카운트다운 시작 (30초 만에 새로고침되면 백그라운드 저장이 끊김)
-          startReturnCountdown(30);
-        }
-      })();
+      runPostSubmitBackground_(data);
     } else {
       throw new Error(json.message || '서버 오류');
     }
@@ -1806,15 +2233,15 @@ function showSuccess(data) {
   sc.classList.add('active');
 
   const scheduleText = data.days.map(d => `${d} ${data.schedule[d]}`).join(', ');
-  const amountText   = data.amount === '10000' ? '10,000원 (1회)' : '850,000원 (10회)';
-  const weekLabelTxt = data.startWeekLabel || '';
+  const amountText   = formatPaymentDisplay(data);
+  const weekLabelTxt = data.startWeekLabel || data.startDate || '';
   const datesLines = (data.sessionDatesFormatted || []).map(function (s, i) {
     return `${i + 1}. ${s}`;
   }).join('<br>');
   const datesBlock = datesLines
     ? `<div class="summary-row summary-dates"><span class="s-label">예정 관리일 (${data.sessions})</span><span class="s-val s-dates">${datesLines}</span></div>`
     : '';
-  const rangeRow = data.sessionRangeText && data.sessions === '10회'
+  const rangeRow = data.sessionRangeText && parseSessionCount(data.sessions) > 1
     ? `<div class="summary-row"><span class="s-label">관리 기간</span><span class="s-val">${data.sessionRangeText}</span></div>`
     : '';
   const noteHtml = data.sessionDatesNote
@@ -1837,8 +2264,9 @@ function showSuccess(data) {
 
   document.getElementById('summaryBox').innerHTML = `
     <div class="summary-row"><span class="s-label">이름</span><span class="s-val">${data.name}</span></div>
+    <div class="summary-row"><span class="s-label">프로그램</span><span class="s-val">${data.program || '-'}</span></div>
     <div class="summary-row"><span class="s-label">담당 강사</span><span class="s-val">${data.instructor}</span></div>
-    <div class="summary-row"><span class="s-label">첫 시작 주간</span><span class="s-val">${weekLabelTxt}</span></div>
+    <div class="summary-row"><span class="s-label">첫 시작일</span><span class="s-val">${weekLabelTxt}</span></div>
     <div class="summary-row"><span class="s-label">관리 일정</span><span class="s-val">${scheduleText}</span></div>
     ${rangeRow}
     ${datesBlock}
@@ -1951,8 +2379,8 @@ function buildA4(data) {
   const scheduleRows = data.days.map(d =>
     `<tr><td class="lbl">${d}요일</td><td>${data.schedule[d]}</td></tr>`
   ).join('');
-  const amountText = data.amount === '10000' ? '90,000원 (1회 이용권)' : '850,000원 (10회 이용권)';
-  const weekLabel  = data.startWeekLabel || '';
+  const amountText = formatPaymentDisplay(data);
+  const weekLabel  = data.startWeekLabel || data.startDate || '';
 
   const sessionRows = (data.sessionDatesFormatted || []).map(function (s, i) {
     return `<tr><td class="lbl">${i + 1}회차</td><td colspan="3">${s}</td></tr>`;
@@ -1965,7 +2393,8 @@ function buildA4(data) {
     <div class="a4-title">리:얼 커뮤니티센터 회원 신청서</div>
     <table class="a4-table">
       <tr><td class="lbl">이름</td><td>${data.name}</td><td class="lbl">연락처</td><td>${formatPhoneKo(data.phone)}</td></tr>
-      <tr><td class="lbl">담당 강사</td><td>${data.instructor}</td><td class="lbl">첫 시작 주간</td><td>${weekLabel}</td></tr>
+      <tr><td class="lbl">프로그램</td><td>${data.program || ''}</td><td class="lbl">담당 강사</td><td>${data.instructor}</td></tr>
+      <tr><td class="lbl">첫 시작일</td><td colspan="3">${weekLabel}</td></tr>
       <tr><td class="lbl">이용권</td><td colspan="3">${amountText}</td></tr>
       ${scheduleRows}
       ${sessionBlock}
@@ -2028,7 +2457,9 @@ function startLoadingCountdown(label, seconds) {
 // 초기화
 // ══════════════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', () => {
-  generateStartWeekOptions();
+  initStartDateInput();
+  renderIncheonPayGrid();
+  onStoreBranchChange();
   setupPhoneInputs();
   setupPage1SchedulePrefetch();
   setupEnterToAdvance();
@@ -2037,7 +2468,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if (ts) {
     ts.addEventListener('change', function (e) {
       const t = e.target;
-      if (t && t.name && t.name.indexOf('time_') === 0) {
+      if (t && (t.classList.contains('time-hour') || t.classList.contains('time-minute'))) {
         applyScheduleBusyStyles();
       }
     });
