@@ -1230,6 +1230,32 @@ function parseSessionCount(sessionsLabel) {
   return m ? parseInt(m[1], 10) : 1;
 }
 
+function getSelectedSessionsLabel() {
+  const payRoot = getStoreBranch() === '약수' ? '#yaksuPayBlock' : '#incheonPayBlock';
+  const payVal = document.querySelector(payRoot + ' input[name="payment"]:checked')?.value || '';
+  if (!payVal) return '';
+  const payParts = payVal.split('|');
+  if (payParts[0] === '약수') return payParts[1] || '';
+  if (payParts[0] === '인천') return payParts[2] || '';
+  return '';
+}
+
+/** 1회 결제 시 관리 요일은 1개만 가능 */
+function validateSessionsMatchManageDays(days, sessionsLabel) {
+  const sessionCount = parseSessionCount(sessionsLabel);
+  const dayCount = (days || []).length;
+  if (sessionCount === 1 && dayCount > 1) {
+    return {
+      ok: false,
+      message:
+        '결제 회차와 관리 요일을 확인해 주세요.\n\n' +
+        '1회 이용권은 관리 요일을 하루만 선택할 수 있습니다.\n' +
+        '요일을 1개로 줄이거나, 4회 이상 이용권을 선택해 주세요.',
+    };
+  }
+  return { ok: true, message: '' };
+}
+
 function formatStartDateLabel(ymd) {
   const d = parseYMD(ymd);
   if (!d) return ymd || '';
@@ -1863,6 +1889,13 @@ function validatePage2() {
   if (!document.querySelector(payRoot + ' input[name="payment"]:checked')) {
     alert('이용권을 선택해주세요.'); return false;
   }
+
+  const sessionsLabel = getSelectedSessionsLabel();
+  const dayCheck = validateSessionsMatchManageDays(days, sessionsLabel);
+  if (!dayCheck.ok) {
+    alert(dayCheck.message);
+    return false;
+  }
   return true;
 }
 
@@ -2232,6 +2265,12 @@ async function submitForm() {
   window._holidaySet = new Set();
   const data = collectData({ includeSignature: false });
   data.signature = getSigDataURL();
+
+  const dayCheck = validateSessionsMatchManageDays(data.days, data.sessions);
+  if (!dayCheck.ok) {
+    alert(dayCheck.message);
+    return;
+  }
 
   var submitBody = {};
   Object.keys(data).forEach(function (k) {
