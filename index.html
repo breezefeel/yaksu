@@ -2219,6 +2219,7 @@ function runPostSubmitBackground_(data) {
     body: JSON.stringify({
       action: 'sendConfirmAlimtalk',
       phone: data.phone,
+      program: data.program,
       days: data.days,
       schedule: data.schedule,
       startWeek: data.startWeek,
@@ -2226,6 +2227,7 @@ function runPostSubmitBackground_(data) {
       amount: data.amount,
       sessions: data.sessions,
       branch: data.branch,
+      storeBranch: data.storeBranch,
       careDuration: data.careDuration,
     }),
   }).catch(function (err) {
