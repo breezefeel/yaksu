@@ -392,6 +392,71 @@ body {
 .pay-grid.pay-grid-4 {
   grid-template-columns: 1fr 1fr;
 }
+.pay-custom-block { margin-top: 12px; }
+.pay-item.pay-item--custom.pay-item--unified { display: block; }
+.pay-item.pay-item--unified label {
+  display: block;
+  min-height: auto;
+  padding: 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all .2s;
+  background: var(--bg);
+}
+.pay-item.pay-item--unified label:hover { border-color: var(--teal); }
+.pay-item.pay-item--unified input:checked + label {
+  background: #fff;
+  border: 2px solid var(--teal);
+  box-shadow: 0 4px 14px rgba(0, 176, 155, 0.16);
+}
+.pay-item.pay-item--unified input:checked + label .pay-name { color: var(--teal); }
+.pay-item.pay-item--unified .pay-custom-head .pay-name {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.pay-item.pay-item--unified .pay-custom-head .pay-desc {
+  font-size: 12px;
+  opacity: .7;
+  margin-bottom: 0;
+}
+.pay-item.pay-item--unified .pay-custom-fields {
+  display: none;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #e5e7eb;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.pay-item.pay-item--unified input:checked + label .pay-custom-fields {
+  display: grid;
+}
+.pay-custom-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.pay-custom-field input {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.pay-custom-field input:focus {
+  outline: none;
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(0, 176, 155, 0.12);
+}
+@media (max-width: 520px) {
+  .pay-item.pay-item--unified .pay-custom-fields { grid-template-columns: 1fr; }
+}
 @media (max-width: 520px) {
   .pay-grid.pay-grid-4 { grid-template-columns: 1fr; }
   .program-grid-secondary { grid-template-columns: 1fr; }
@@ -977,7 +1042,7 @@ body {
 
       <div class="pay-branch-block" id="yaksuPayBlock">
         <div class="pay-branch-title">서울 약수점</div>
-        <div class="pay-grid pay-grid-4">
+        <div class="pay-grid pay-grid-4" id="yaksuPayGrid">
           <div class="pay-item">
             <input type="radio" name="payment" id="payYs1" value="약수|1회|85000">
             <label for="payYs1">
@@ -988,30 +1053,69 @@ body {
             </label>
           </div>
           <div class="pay-item">
-            <input type="radio" name="payment" id="payYs4" value="약수|4회|323000">
-            <label for="payYs4">
-              <span class="pay-badge">5% 할인</span>
-              <div class="pay-name">4회 이용권</div>
-              <div class="pay-price">323,000원</div>
-              <div class="pay-desc">회당 80,750원</div>
+            <input type="radio" name="payment" id="payYs1f" value="약수|1회(근막이완)|40000">
+            <label for="payYs1f">
+              <span class="pay-badge-spacer" aria-hidden="true">·</span>
+              <div class="pay-name">1회 이용권(근막이완)</div>
+              <div class="pay-price">40,000원</div>
+              <div class="pay-desc">근막이완 포함</div>
             </label>
           </div>
           <div class="pay-item pay-item--recommended">
-            <input type="radio" name="payment" id="payYs8" value="약수|8회|612000" checked>
-            <label for="payYs8">
-              <span class="pay-badge">추천 · 10% 할인</span>
-              <div class="pay-name">8회 이용권</div>
-              <div class="pay-price">612,000원</div>
-              <div class="pay-desc">회당 76,500원</div>
+            <input type="radio" name="payment" id="payYsW2" value="약수|주2회 패키지|660000" checked>
+            <label for="payYsW2">
+              <span class="pay-badge">추천</span>
+              <div class="pay-name">주2회 패키지</div>
+              <div class="pay-price">660,000원</div>
+              <div class="pay-desc">주 2회 · 8회</div>
+            </label>
+          </div>
+          <div class="pay-item pay-item--recommended">
+            <input type="radio" name="payment" id="payYsW2f" value="약수|주2회 패키지(+근막이완)|760000">
+            <label for="payYsW2f">
+              <span class="pay-badge">추천 · 근막이완</span>
+              <div class="pay-name">주2회 패키지(+근막이완)</div>
+              <div class="pay-price">760,000원</div>
+              <div class="pay-desc">주 2회 · 8회</div>
             </label>
           </div>
           <div class="pay-item">
-            <input type="radio" name="payment" id="payYs24" value="약수|24회|1734000">
-            <label for="payYs24">
-              <span class="pay-badge">15% 할인</span>
-              <div class="pay-name">24회 이용권</div>
-              <div class="pay-price">1,734,000원</div>
-              <div class="pay-desc">회당 72,250원</div>
+            <input type="radio" name="payment" id="payYsM3" value="약수|3개월 패키지|1920000">
+            <label for="payYsM3">
+              <span class="pay-badge-spacer" aria-hidden="true">·</span>
+              <div class="pay-name">3개월 패키지</div>
+              <div class="pay-price">1,920,000원</div>
+              <div class="pay-desc">3개월 · 24회</div>
+            </label>
+          </div>
+          <div class="pay-item">
+            <input type="radio" name="payment" id="payYsM3f" value="약수|3개월 패키지(+근막이완)|2160000">
+            <label for="payYsM3f">
+              <span class="pay-badge-spacer" aria-hidden="true">·</span>
+              <div class="pay-name">3개월 패키지(+근막이완)</div>
+              <div class="pay-price">2,160,000원</div>
+              <div class="pay-desc">3개월 · 24회</div>
+            </label>
+          </div>
+        </div>
+        <div class="pay-custom-block" id="yaksuPayCustomBlock">
+          <div class="pay-item pay-item--custom pay-item--unified">
+            <input type="radio" name="payment" id="payYsCustom" value="약수|기타|0" onchange="onPaymentChange()">
+            <label for="payYsCustom">
+              <div class="pay-custom-head">
+                <div class="pay-name">기타 금액</div>
+                <div class="pay-desc">표준 이용권 외 금액 직접 입력</div>
+              </div>
+              <div class="pay-custom-fields" id="yaksuCustomFields">
+                <div class="pay-custom-field">
+                  <label for="yaksuCustomSessions">회차</label>
+                  <input type="number" id="yaksuCustomSessions" min="1" max="99" inputmode="numeric" placeholder="예: 8" oninput="syncCustomPaymentValues()" onclick="event.stopPropagation()">
+                </div>
+                <div class="pay-custom-field">
+                  <label for="yaksuCustomAmount">금액 (원)</label>
+                  <input type="number" id="yaksuCustomAmount" min="1000" step="1000" inputmode="numeric" placeholder="예: 550000" oninput="syncCustomPaymentValues()" onclick="event.stopPropagation()">
+                </div>
+              </div>
             </label>
           </div>
         </div>
@@ -1030,6 +1134,27 @@ body {
           </div>
         </div>
         <div class="pay-grid pay-grid-4" id="incheonPayGrid"></div>
+        <div class="pay-custom-block" id="incheonPayCustomBlock">
+          <div class="pay-item pay-item--custom pay-item--unified">
+            <input type="radio" name="payment" id="payIcCustom" value="인천|50|기타|0" onchange="onPaymentChange()">
+            <label for="payIcCustom">
+              <div class="pay-custom-head">
+                <div class="pay-name">기타 금액</div>
+                <div class="pay-desc">표준 이용권 외 금액 직접 입력</div>
+              </div>
+              <div class="pay-custom-fields" id="incheonCustomFields">
+                <div class="pay-custom-field">
+                  <label for="incheonCustomSessions">회차</label>
+                  <input type="number" id="incheonCustomSessions" min="1" max="99" inputmode="numeric" placeholder="예: 8" oninput="syncCustomPaymentValues()" onclick="event.stopPropagation()">
+                </div>
+                <div class="pay-custom-field">
+                  <label for="incheonCustomAmount">금액 (원)</label>
+                  <input type="number" id="incheonCustomAmount" min="1000" step="1000" inputmode="numeric" placeholder="예: 550000" oninput="syncCustomPaymentValues()" onclick="event.stopPropagation()">
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1195,6 +1320,15 @@ function formatDateForDB(date) {
   return `${y}-${m}-${day}`;
 }
 
+const YAKSU_PASS_SESSIONS = {
+  '1회': 1,
+  '1회(근막이완)': 1,
+  '주2회 패키지': 8,
+  '주2회 패키지(+근막이완)': 8,
+  '3개월 패키지': 24,
+  '3개월 패키지(+근막이완)': 24,
+};
+
 const INCHEON_PAY = {
   '50': {
     single1: { sessions: '1회', name: '1회 이용권', total: 45000, per: 45000 },
@@ -1226,8 +1360,86 @@ function formatPayBadgeLabel_(pack, singlePer) {
 }
 
 function parseSessionCount(sessionsLabel) {
-  const m = String(sessionsLabel || '').match(/(\d+)/);
-  return m ? parseInt(m[1], 10) : 1;
+  const key = String(sessionsLabel || '').trim();
+  if (YAKSU_PASS_SESSIONS[key]) return YAKSU_PASS_SESSIONS[key];
+  const m = key.match(/(\d+)\s*회/);
+  if (m) return parseInt(m[1], 10);
+  const m2 = key.match(/(\d+)/);
+  return m2 ? parseInt(m2[1], 10) : 1;
+}
+
+function isCustomPaymentRadio(el) {
+  return el && (el.id === 'payYsCustom' || el.id === 'payIcCustom');
+}
+
+function getCustomPaymentFields(branch) {
+  if (branch === '약수') {
+    return {
+      radio: document.getElementById('payYsCustom'),
+      fields: document.getElementById('yaksuCustomFields'),
+      sessions: document.getElementById('yaksuCustomSessions'),
+      amount: document.getElementById('yaksuCustomAmount'),
+    };
+  }
+  return {
+    radio: document.getElementById('payIcCustom'),
+    fields: document.getElementById('incheonCustomFields'),
+    sessions: document.getElementById('incheonCustomSessions'),
+    amount: document.getElementById('incheonCustomAmount'),
+  };
+}
+
+function updateCustomPaymentFieldsVisibility() {
+  /* 입력란 표시는 CSS(.pay-item--unified input:checked)로 처리 */
+}
+
+function syncCustomPaymentValues() {
+  const ys = getCustomPaymentFields('약수');
+  if (ys.radio) {
+    const sessions = parseInt(String(ys.sessions && ys.sessions.value || '').replace(/\D/g, ''), 10) || 0;
+    const amount = parseInt(String(ys.amount && ys.amount.value || '').replace(/\D/g, ''), 10) || 0;
+    ys.radio.value = sessions > 0
+      ? ('약수|' + sessions + '회|' + amount)
+      : '약수|기타|0';
+  }
+  const ic = getCustomPaymentFields('인천');
+  if (ic.radio) {
+    const dur = document.querySelector('input[name="careDuration"]:checked');
+    const mins = dur ? dur.value : '50';
+    const sessions = parseInt(String(ic.sessions && ic.sessions.value || '').replace(/\D/g, ''), 10) || 0;
+    const amount = parseInt(String(ic.amount && ic.amount.value || '').replace(/\D/g, ''), 10) || 0;
+    ic.radio.value = sessions > 0
+      ? ('인천|' + mins + '|' + sessions + '회|' + amount)
+      : ('인천|' + mins + '|기타|0');
+  }
+  updateCustomPaymentFieldsVisibility();
+}
+
+function onPaymentChange() {
+  syncCustomPaymentValues();
+}
+
+function bindPaymentChangeListeners() {
+  document.querySelectorAll('input[name="payment"]').forEach(function (r) {
+    if (r._payChangeBound) return;
+    r._payChangeBound = true;
+    r.addEventListener('change', onPaymentChange);
+  });
+}
+
+function validateCustomPayment(branch) {
+  const cfg = getCustomPaymentFields(branch);
+  if (!cfg.radio || !cfg.radio.checked) return { ok: true, message: '' };
+  syncCustomPaymentValues();
+  const sessions = parseInt(String(cfg.sessions && cfg.sessions.value || '').replace(/\D/g, ''), 10) || 0;
+  const amount = parseInt(String(cfg.amount && cfg.amount.value || '').replace(/\D/g, ''), 10) || 0;
+  if (sessions < 1) {
+    return { ok: false, message: '기타 금액을 선택하셨다면 회차를 입력해 주세요.' };
+  }
+  if (amount < 1000) {
+    return { ok: false, message: '기타 금액을 선택하셨다면 1,000원 이상 금액을 입력해 주세요.' };
+  }
+  return { ok: true, message: '' };
 }
 
 function getSelectedSessionsLabel() {
@@ -1347,6 +1559,7 @@ function renderIncheonPayGrid() {
     const rec = grid.querySelector('.pay-item--recommended input[name="payment"]');
     if (rec) rec.checked = true;
   }
+  bindPaymentChangeListeners();
 }
 
 function getStoreBranch() {
@@ -1364,8 +1577,8 @@ function onStoreBranchChange() {
   if (grid) grid.classList.toggle('instructor-grid--two', branch === '인천');
 
   if (branch === '약수') {
-    const ys8 = document.getElementById('payYs8');
-    if (ys8 && !document.querySelector('#yaksuPayBlock input[name="payment"]:checked')) ys8.checked = true;
+    const ysW2 = document.getElementById('payYsW2');
+    if (ysW2 && !document.querySelector('#yaksuPayBlock input[name="payment"]:checked')) ysW2.checked = true;
   }
   if (branch === '인천') renderIncheonPayGrid();
 
@@ -1387,11 +1600,18 @@ function onStoreBranchChange() {
   });
 
   applyScheduleBusyStyles();
+  syncCustomPaymentValues();
 }
 function onCareDurationChange() {
   const prev = document.querySelector('input[name="payment"]:checked');
-  if (prev && prev.value.indexOf('인천|') === 0) prev.checked = false;
+  const wasCustom = prev && isCustomPaymentRadio(prev);
+  if (prev && prev.value.indexOf('인천|') === 0 && !wasCustom) prev.checked = false;
   renderIncheonPayGrid();
+  if (wasCustom) {
+    const icCustom = document.getElementById('payIcCustom');
+    if (icCustom) icCustom.checked = true;
+  }
+  syncCustomPaymentValues();
 }
 
 function parseYMD(s) {
@@ -1890,6 +2110,14 @@ function validatePage2() {
     alert('이용권을 선택해주세요.'); return false;
   }
 
+  const customCheck = validateCustomPayment(getStoreBranch());
+  if (!customCheck.ok) {
+    alert(customCheck.message);
+    return false;
+  }
+
+  syncCustomPaymentValues();
+
   const sessionsLabel = getSelectedSessionsLabel();
   const dayCheck = validateSessionsMatchManageDays(days, sessionsLabel);
   if (!dayCheck.ok) {
@@ -2116,6 +2344,7 @@ function collectData(opts) {
   });
 
   const storeBranch = getStoreBranch();
+  syncCustomPaymentValues();
   const payVal = document.querySelector('input[name="payment"]:checked')?.value || '';
   const payParts = payVal.split('|');
   let branch = '';
@@ -2566,6 +2795,9 @@ window.addEventListener('DOMContentLoaded', () => {
       applyScheduleBusyStyles();
     });
   });
+
+  bindPaymentChangeListeners();
+  syncCustomPaymentValues();
 
   fetchScheduleBusy().then(function () {
     applyScheduleBusyStyles();
