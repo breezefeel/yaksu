@@ -122,6 +122,40 @@ body {
 }
 .form-label .req { color: var(--teal); margin-left: 2px; }
 
+.day-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.day-label-row .form-label { margin-bottom: 0; flex: 1; min-width: 0; }
+.manual-dates-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+}
+.manual-dates-check input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--teal);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.manual-dates-hint {
+  font-size: 11px;
+  color: var(--teal);
+  line-height: 1.5;
+  margin: -4px 0 10px;
+}
+
 .form-input {
   width: 100%;
   padding: 14px 16px;
@@ -578,134 +612,6 @@ body {
 .inst-icon { font-size: 24px; margin-bottom: 6px; }
 .inst-name { font-size: 14px; font-weight: 700; }
 
-/* ── 약관 ────────────────────────────── */
-.terms-box {
-  background: var(--bg);
-  border: 1.5px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
-  max-height: 300px;
-  overflow-y: auto;
-  font-size: 12px;
-  line-height: 1.8;
-  color: var(--muted);
-  margin-bottom: 12px;
-  transition: all 0.5s ease;
-}
-.terms-box.collapsed {
-  max-height: 100px;
-  overflow: hidden;
-}
-.terms-box h4 { color: var(--text); font-size: 13px; margin: 0 0 8px; }
-.terms-box ol { padding-left: 16px; }
-.terms-box li { margin-bottom: 6px; }
-
-.privacy-box {
-  background: var(--bg);
-  border: 1.5px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
-  max-height: 0;
-  overflow: hidden;
-  margin-bottom: 12px;
-  font-size: 12px;
-  line-height: 1.8;
-  color: var(--muted);
-  transition: all 0.5s ease;
-  opacity: 0;
-}
-.privacy-box h4 { color: var(--text); font-size: 13px; margin: 0 0 10px; }
-.privacy-box p { margin: 0 0 6px; color: var(--text); }
-.privacy-box p strong { color: var(--text); }
-.privacy-box.expanded {
-  max-height: 520px;
-  opacity: 1;
-  overflow-y: auto;
-}
-.privacy-box.collapsed {
-  max-height: 100px;
-  opacity: 1;
-  overflow: hidden;
-}
-
-.agree-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 16px;
-  border: 1.5px solid var(--border);
-  border-radius: 12px;
-  cursor: pointer;
-  margin-bottom: 8px;
-  transition: all .2s;
-  background: var(--bg);
-}
-.agree-row.checked { border-color: var(--teal); background: var(--teal-lt); }
-.agree-row input[type="checkbox"] {
-  width: 20px; height: 20px;
-  accent-color: var(--teal);
-  cursor: pointer;
-  flex-shrink: 0;
-}
-.agree-row span {
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text);
-  flex: 1;
-  line-height: 1.45;
-}
-
-/* 서명 */
-.sig-wrap {
-  border: 1.5px dashed var(--teal);
-  border-radius: 12px;
-  background: var(--teal-lt);
-  margin-bottom: 10px;
-  position: relative;
-  overflow: hidden;
-}
-.sig-canvas {
-  display: block;
-  width: 100%;
-  height: 180px;
-  touch-action: none;
-  cursor: crosshair;
-  position: relative;
-  z-index: 2;
-}
-.sig-hint {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 13px;
-  color: var(--teal);
-  opacity: .6;
-  pointer-events: none;
-  font-weight: 500;
-}
-.sig-clear {
-  width: 100%;
-  padding: 10px;
-  background: #f0f0f0;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 13px;
-  color: var(--muted);
-  transition: background .2s;
-}
-.sig-clear:hover { background: #e0e0e0; }
-
-.sig-help {
-  font-size: 13px;
-  color: var(--teal);
-  margin-bottom: 10px;
-  font-weight: 500;
-}
-#agree2Group { margin-bottom: 0; }
-
 /* ── 버튼 ─────────────────────────────── */
 .btn-row { display: flex; gap: 10px; margin-top: 28px; }
 .btn {
@@ -862,8 +768,6 @@ body {
       <div class="step-dot active" id="dot1">1</div>
       <div class="step-line" id="line1"></div>
       <div class="step-dot" id="dot2">2</div>
-      <div class="step-line" id="line2"></div>
-      <div class="step-dot" id="dot3">3</div>
     </div>
 
     <div class="section-title">기본 정보</div>
@@ -901,8 +805,6 @@ body {
       <div class="step-dot done" id="dot1b">✓</div>
       <div class="step-line done" id="line1b"></div>
       <div class="step-dot active" id="dot2b">2</div>
-      <div class="step-line" id="line2b"></div>
-      <div class="step-dot" id="dot3b">3</div>
     </div>
 
     <div class="section-title">프로그램 · 일정</div>
@@ -998,7 +900,14 @@ body {
 
     <!-- 4. 관리 요일 -->
     <div class="form-group">
-      <label class="form-label">관리 요일 <span class="req">*</span> <small style="color:var(--muted);font-weight:400;">(복수 선택 가능)</small></label>
+      <div class="day-label-row">
+        <label class="form-label">관리 요일 <span class="req">*</span> <small style="color:var(--muted);font-weight:400;">(복수 선택 가능)</small></label>
+        <label class="manual-dates-check" for="manualScheduleDates">
+          <input type="checkbox" id="manualScheduleDates" onchange="onManualScheduleDatesChange()">
+          <span>일자 수동 입력?</span>
+        </label>
+      </div>
+      <p class="manual-dates-hint" id="manualScheduleHint" hidden>체크 시 선택한 요일·시간마다 첫 시작일 이후 가장 빠른 1회만 시트에 예약됩니다. 나머지 회차는 직접 입력해 주세요.</p>
       <div class="choice-grid" id="dayGrid">
         <div class="choice-item">
           <input type="checkbox" id="d1" value="월" onchange="buildTimePickers()">
@@ -1160,79 +1069,7 @@ body {
 
     <div class="btn-row">
       <button class="btn btn-prev" onclick="goPage(1)">← 이전</button>
-      <button class="btn btn-next" onclick="goPage(3)">다음 →</button>
-    </div>
-  </div>
-
-  <!-- ══════════════════════════════════
-       PAGE 3 — 약관 / 서명
-  ══════════════════════════════════ -->
-  <div class="card" id="page3">
-    <div class="progress-bar">
-      <div class="step-dot done">✓</div>
-      <div class="step-line done"></div>
-      <div class="step-dot done">✓</div>
-      <div class="step-line done"></div>
-      <div class="step-dot active">3</div>
-    </div>
-
-    <div class="section-title">약관 동의</div>
-    <div class="section-sub">이용약관을 확인하고 동의해주세요.</div>
-
-    <div class="terms-box" id="termsBox">
-      <h4>[ 이용약관 ]</h4>
-      <ol>
-        <li>본인 부주의로 발생되는 사고에 대해서는 책임을 지지 않습니다.</li>
-        <li>해지를 원하시는 입주민은 <strong>반드시 안내 데스크에 방문하셔서 <span style="color:#dc2626;">해지신청서</span> 작성.</strong></li>
-        <li>등록 후 <strong>미 이용 시 연기 및 환불이 불가하며 반드시 해지신청</strong>하셔야 합니다.</li>
-        <li>안전을 위해 영유아, 초등학생, 애완동물의 동반출입을 금지합니다.</li>
-        <li>음주 후 출입불가 하며, 모든 음식물 반입을 금지합니다.</li>
-        <li>모든 비품과 시설물의 보호에 힘쓰고, 고의/과실로 파손하거나 훼손한 경우 배상 책임이 있습니다.</li>
-      </ol>
-    </div>
-
-    <label class="agree-row" id="agreeRow1">
-      <input type="checkbox" id="agree1" onchange="handleAgree1Change()">
-      <span>이용약관에 동의합니다</span>
-    </label>
-
-    <div class="privacy-box" id="privacyBox">
-      <h4>[ 개인정보 수집·이용 동의서 ]</h4>
-      <p><strong>1. 개인정보 수집·이용 목적</strong></p>
-      <p>- 커뮤니티센터 운영에 대한 이용약관 동의 및 회원가입 신청</p>
-      <p><strong>2. 수집항목</strong></p>
-      <p>- 성명, 성별, 생년월일, 주소, 전화번호</p>
-      <p><strong>3. 보유·이용기간</strong></p>
-      <p>- 이용종료 후 2년</p>
-      <p><strong>4. 동의 거부 고지</strong></p>
-      <p>- 개인정보 수집, 이용을 거부하실 수 있습니다. 거부할 경우 커뮤니티시설 이용이 제한될 수 있습니다.</p>
-      <p><strong>5. 제3자 제공 동의</strong></p>
-      <p>- 제공받는 자: (주)스포이즘, 관리사무소</p>
-      <p>- 이용목적: 커뮤니티시설 이용의 확인 및 입주민 확인</p>
-      <p>- 제공항목: 성명, 전화번호, 생년월일, 주소</p>
-      <p>- 보유기간: 커뮤니티 이용 종료 후 2년</p>
-    </div>
-
-    <div id="agree2Group" style="display:none;">
-      <label class="agree-row" id="agreeRow2">
-        <input type="checkbox" id="agree2" onchange="handleAgree2Change()">
-        <span>개인정보 수집·이용에 동의합니다</span>
-      </label>
-    </div>
-
-    <div class="form-group" id="signatureGroup" style="display:none;margin-top:20px;">
-      <label class="form-label">서명 <span class="req">*</span></label>
-      <p class="sig-help">✍️ 아래 박스에 손가락이나 마우스로 서명해주세요</p>
-      <div class="sig-wrap">
-        <canvas class="sig-canvas" id="sigCanvas"></canvas>
-        <div class="sig-hint" id="sigHint">↓ 여기에 서명해주세요</div>
-      </div>
-      <button type="button" class="sig-clear" onclick="clearSig()">서명 지우기</button>
-    </div>
-
-    <div class="btn-row">
-      <button class="btn btn-prev" onclick="goPage(2)">← 이전</button>
-      <button class="btn btn-next" id="submitBtn" onclick="submitForm()">신청 완료 →</button>
+      <button class="btn btn-next" id="submitBtn" onclick="submitForm()">완료</button>
     </div>
   </div>
 
@@ -1689,6 +1526,46 @@ function computeSessionDates(startAnchorYmd, daysOrdered, sessionsLabel, holiday
   return adjustSessionsForHolidays(raw, holidaySet, sortedDays);
 }
 
+/** 일자 수동 입력: 선택 요일마다 첫 시작일 이후 해당 요일 1회만 */
+function computeFirstSlotPerDay(startAnchorYmd, daysOrdered, holidaySet) {
+  if (!startAnchorYmd || !daysOrdered || daysOrdered.length === 0) return [];
+  const anchor = parseYMD(startAnchorYmd);
+  if (!anchor || isNaN(anchor.getTime())) return [];
+
+  const allowed = new Set(daysOrdered);
+  const seen = new Set();
+  const out = [];
+
+  daysOrdered.forEach(function (dayKr) {
+    const targetJs = DAY_MAP_KO_TO_JS[dayKr];
+    if (targetJs == null) return;
+    let d = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate());
+    let guard = 0;
+    while (guard++ < 21) {
+      if (d.getDay() === targetJs) {
+        const adj = bumpUntilSessionValid(d, holidaySet || new Set(), allowed, seen);
+        seen.add(formatDateForDB(adj));
+        out.push(adj);
+        break;
+      }
+      d.setDate(d.getDate() + 1);
+    }
+  });
+
+  out.sort(function (a, b) { return a.getTime() - b.getTime(); });
+  return out;
+}
+
+function isManualScheduleDates() {
+  const el = document.getElementById('manualScheduleDates');
+  return !!(el && el.checked);
+}
+
+function onManualScheduleDatesChange() {
+  const hint = document.getElementById('manualScheduleHint');
+  if (hint) hint.hidden = !isManualScheduleDates();
+}
+
 function yearsSpanForSchedule(startAnchorYmd, sessionsLabel) {
   const yset = new Set();
   const yNow = new Date().getFullYear();
@@ -1915,6 +1792,23 @@ function formatPhoneKo(digits) {
   return digits.replace(/^(\d{3})(\d{4})(\d{4})$/, '$1-$2-$3');
 }
 
+/** 붙여넣기 문자열 → 010 제외 가운데·끝 4자리 (010-1234-5678, 01012345678 등) */
+function parsePastedPhoneParts(raw) {
+  var d = String(raw || '').replace(/\D/g, '');
+  if (d.indexOf('82') === 0 && d.length >= 11) d = '0' + d.slice(2);
+  if (d.indexOf('010') === 0) d = d.slice(3);
+  else if (d.indexOf('10') === 0 && d.length >= 10) d = d.slice(2);
+  return { mid: d.slice(0, 4), last: d.slice(4, 8) };
+}
+
+function shouldSplitPhonePaste(raw) {
+  var d = String(raw || '').replace(/\D/g, '');
+  if (d.length >= 8) return true;
+  if (d.indexOf('010') === 0 && d.length > 3) return true;
+  if (d.indexOf('82') === 0 && d.length >= 10) return true;
+  return false;
+}
+
 function setupPhoneInputs() {
   const mid = document.getElementById('phone-mid');
   const last = document.getElementById('phone-last');
@@ -1924,7 +1818,33 @@ function setupPhoneInputs() {
     el.value = (el.value || '').replace(/\D/g, '').slice(0, maxLen);
   }
 
+  function afterPhoneFilled() {
+    clearTimeout(_schedulePrefetchTimer);
+    var digits = getPhoneDigits();
+    if (digits.length === 11) {
+      var sw = document.getElementById('startWeek');
+      if (sw && sw.value) fetchScheduleBusy().then(applyScheduleBusyIfVisible);
+    } else {
+      scheduleScheduleBusyPrefetch();
+    }
+  }
+
+  function applyPhonePaste(raw, focusLast) {
+    if (!shouldSplitPhonePaste(raw)) return false;
+    var parts = parsePastedPhoneParts(raw);
+    mid.value = parts.mid;
+    last.value = parts.last;
+    if (focusLast !== false && parts.last) last.focus();
+    afterPhoneFilled();
+    return true;
+  }
+
   mid.addEventListener('input', function () {
+    var d = (mid.value || '').replace(/\D/g, '');
+    if (d.length > 4) {
+      applyPhonePaste(d, true);
+      return;
+    }
     stripDigits(mid, 4);
     if (mid.value.length >= 4) last.focus();
     scheduleScheduleBusyPrefetch();
@@ -1932,16 +1852,7 @@ function setupPhoneInputs() {
 
   last.addEventListener('input', function () {
     stripDigits(last, 4);
-    var digits = getPhoneDigits();
-    if (digits.length === 11) {
-      clearTimeout(_schedulePrefetchTimer);
-      var sw = document.getElementById('startWeek');
-      if (sw && sw.value) {
-        fetchScheduleBusy().then(applyScheduleBusyIfVisible);
-      }
-    } else {
-      scheduleScheduleBusyPrefetch();
-    }
+    afterPhoneFilled();
   });
 
   last.addEventListener('keydown', function (e) {
@@ -1953,49 +1864,35 @@ function setupPhoneInputs() {
   });
 
   mid.addEventListener('paste', function (e) {
-    const txt = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
-    if (txt.startsWith('010') && txt.length >= 11) {
-      e.preventDefault();
-      mid.value = txt.slice(3, 7);
-      last.value = txt.slice(7, 11);
-      last.focus();
-      clearTimeout(_schedulePrefetchTimer);
-      var swm = document.getElementById('startWeek');
-      if (swm && swm.value) fetchScheduleBusy().then(applyScheduleBusyIfVisible);
-    } else if (txt.length >= 8) {
-      e.preventDefault();
-      mid.value = txt.slice(0, 4);
-      last.value = txt.slice(4, 8);
-      last.focus();
-    }
+    var raw = (e.clipboardData || window.clipboardData).getData('text');
+    if (!shouldSplitPhonePaste(raw)) return;
+    e.preventDefault();
+    applyPhonePaste(raw, true);
   });
 
   last.addEventListener('paste', function (e) {
-    const txt = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
-    if (txt.startsWith('010') && txt.length >= 11) {
+    var raw = (e.clipboardData || window.clipboardData).getData('text');
+    if (shouldSplitPhonePaste(raw)) {
       e.preventDefault();
-      mid.value = txt.slice(3, 7);
-      last.value = txt.slice(7, 11);
-      clearTimeout(_schedulePrefetchTimer);
-      var swl = document.getElementById('startWeek');
-      if (swl && swl.value) fetchScheduleBusy().then(applyScheduleBusyIfVisible);
+      applyPhonePaste(raw, false);
       return;
     }
+    var txt = String(raw || '').replace(/\D/g, '');
     if (txt.length >= 4) {
       e.preventDefault();
       last.value = txt.slice(0, 4);
+      afterPhoneFilled();
     }
   });
 }
 
-/** Enter 키로 「다음」/「신청 완료」와 동일 동작 (한글 IME 조합 중에는 무시) */
+/** Enter 키로 「다음」/「완료」와 동일 동작 (한글 IME 조합 중에는 무시) */
 function setupEnterToAdvance() {
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Enter' || e.ctrlKey || e.altKey || e.metaKey || e.isComposing) return;
 
     const p1 = document.getElementById('page1');
     const p2 = document.getElementById('page2');
-    const p3 = document.getElementById('page3');
 
     if (p1 && p1.classList.contains('active')) {
       if (!e.target.closest || !e.target.closest('#page1')) return;
@@ -2012,16 +1909,6 @@ function setupEnterToAdvance() {
       const inp = e.target;
       if (tag === 'textarea') return;
       if (tag === 'input' && (inp.type === 'radio' || inp.type === 'checkbox')) return;
-      e.preventDefault();
-      goPage(3);
-      return;
-    }
-
-    if (p3 && p3.classList.contains('active')) {
-      if (!e.target.closest || !e.target.closest('#page3')) return;
-      if (e.target.closest('.btn-row')) return;
-      if (e.target.id === 'sigCanvas' || (e.target.closest && e.target.closest('.sig-wrap'))) return;
-      if ((e.target.tagName || '').toLowerCase() === 'textarea') return;
       e.preventDefault();
       submitForm();
     }
@@ -2041,26 +1928,10 @@ async function goPage(n) {
       updateScheduleLegendVisibility();
     });
   }
-  if (n === 3) {
-    await fetchScheduleBusyBounded(2200);
-    if (!validatePage2()) return;
-  }
-
   document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
   const target = document.getElementById('page' + n);
   if (target) target.classList.add('active');
   window.scrollTo({ top: 0, behavior: 'smooth' });
-
-  if (n === 3) {
-    requestAnimationFrame(function () {
-      var sg = document.getElementById('signatureGroup');
-      if (sg && sg.style.display !== 'none') {
-        resizeSigCanvas();
-        bindSigPadListeners();
-        setTimeout(function () { resizeSigCanvas(); }, 80);
-      }
-    });
-  }
 }
 
 function validatePage1() {
@@ -2128,208 +1999,6 @@ function validatePage2() {
 }
 
 // ══════════════════════════════════════════════════════
-// 동의 체크박스
-// ══════════════════════════════════════════════════════
-function updateAgreeStyle(cbId, rowId) {
-  const cb  = document.getElementById(cbId);
-  const row = document.getElementById(rowId);
-  if (cb && row) row.classList.toggle('checked', cb.checked);
-}
-
-function handleAgree1Change() {
-  const agree1 = document.getElementById('agree1').checked;
-  const termsBox = document.getElementById('termsBox');
-  const privacyBox = document.getElementById('privacyBox');
-  const agree2Group = document.getElementById('agree2Group');
-
-  if (agree1) {
-    termsBox.classList.add('collapsed');
-    privacyBox.classList.remove('collapsed');
-    privacyBox.classList.add('expanded');
-    agree2Group.style.display = 'block';
-    updateAgreeStyle('agree1', 'agreeRow1');
-    setTimeout(function () {
-      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-    }, 500);
-  } else {
-    termsBox.classList.remove('collapsed');
-    privacyBox.classList.remove('expanded');
-    privacyBox.classList.remove('collapsed');
-    agree2Group.style.display = 'none';
-    document.getElementById('agree2').checked = false;
-    document.getElementById('signatureGroup').style.display = 'none';
-    clearSig();
-    updateAgreeStyle('agree1', 'agreeRow1');
-    updateAgreeStyle('agree2', 'agreeRow2');
-  }
-}
-
-function handleAgree2Change() {
-  const agree2 = document.getElementById('agree2').checked;
-  const privacyBox = document.getElementById('privacyBox');
-  const signatureGroup = document.getElementById('signatureGroup');
-
-  if (agree2) {
-    privacyBox.classList.remove('expanded');
-    privacyBox.classList.add('collapsed');
-    signatureGroup.style.display = 'block';
-    updateAgreeStyle('agree2', 'agreeRow2');
-    setTimeout(function () {
-      resizeSigCanvas();
-      bindSigPadListeners();
-    }, 100);
-    setTimeout(function () {
-      resizeSigCanvas();
-      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-    }, 250);
-  } else {
-    privacyBox.classList.remove('collapsed');
-    privacyBox.classList.add('expanded');
-    signatureGroup.style.display = 'none';
-    clearSig();
-    updateAgreeStyle('agree2', 'agreeRow2');
-  }
-}
-
-// ══════════════════════════════════════════════════════
-// 서명 패드 (3페이지가 보인 뒤에 캔버스 크기 지정 — 숨김 상태에서는 폭·높이 0)
-// ══════════════════════════════════════════════════════
-let sigDrawing = false;
-let sigHasMark = false;
-let sigPadListenersBound = false;
-
-function resizeSigCanvas() {
-  const canvas = document.getElementById('sigCanvas');
-  if (!canvas) return;
-
-  const rect = canvas.getBoundingClientRect();
-  let cssW = rect.width;
-  let cssH = rect.height;
-  if (cssW < 20) {
-    const wrap = canvas.closest('.sig-wrap');
-    if (wrap) cssW = wrap.getBoundingClientRect().width;
-    if (cssW < 20) cssW = canvas.parentElement ? canvas.parentElement.clientWidth : 300;
-  }
-  if (cssH < 20) cssH = 180;
-
-  const dpr = window.devicePixelRatio || 1;
-  const needW = Math.max(1, Math.floor(cssW * dpr));
-  const needH = Math.max(1, Math.floor(cssH * dpr));
-
-  if (canvas.width === needW && canvas.height === needH) return;
-
-  let snapshot = null;
-  if (sigHasMark && canvas.width > 0) {
-    try { snapshot = canvas.toDataURL('image/png'); } catch (e) {}
-  }
-
-  canvas.width = needW;
-  canvas.height = needH;
-  const ctx = canvas.getContext('2d');
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.scale(dpr, dpr);
-  ctx.strokeStyle = '#1a1a1a';
-  ctx.lineWidth = 2;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-
-  if (snapshot) {
-    const img = new Image();
-    img.onload = function () {
-      try {
-        ctx.drawImage(img, 0, 0, cssW, cssH);
-      } catch (e) {}
-    };
-    img.src = snapshot;
-  }
-}
-
-function bindSigPadListeners() {
-  if (sigPadListenersBound) return;
-  sigPadListenersBound = true;
-
-  const canvas = document.getElementById('sigCanvas');
-  if (!canvas) return;
-
-  function pos(e) {
-    const r = canvas.getBoundingClientRect();
-    let t = e.touches && e.touches[0];
-    if (!t && e.changedTouches && e.changedTouches[0]) t = e.changedTouches[0];
-    if (!t) t = e;
-    return { x: t.clientX - r.left, y: t.clientY - r.top };
-  }
-
-  canvas.addEventListener('mousedown', function (e) {
-    e.preventDefault();
-    sigDrawing = true;
-    const ctx = canvas.getContext('2d');
-    ctx.beginPath();
-    const p = pos(e);
-    ctx.moveTo(p.x, p.y);
-  });
-
-  canvas.addEventListener('mousemove', function (e) {
-    if (!sigDrawing) return;
-    const ctx = canvas.getContext('2d');
-    const p = pos(e);
-    ctx.lineTo(p.x, p.y);
-    ctx.stroke();
-    markSig();
-  });
-
-  canvas.addEventListener('mouseup', function () { sigDrawing = false; });
-  canvas.addEventListener('mouseleave', function () { sigDrawing = false; });
-
-  canvas.addEventListener('touchstart', function (e) {
-    e.preventDefault();
-    sigDrawing = true;
-    const ctx = canvas.getContext('2d');
-    ctx.beginPath();
-    const p = pos(e);
-    ctx.moveTo(p.x, p.y);
-  }, { passive: false });
-
-  canvas.addEventListener('touchmove', function (e) {
-    e.preventDefault();
-    if (!sigDrawing) return;
-    const ctx = canvas.getContext('2d');
-    const p = pos(e);
-    ctx.lineTo(p.x, p.y);
-    ctx.stroke();
-    markSig();
-  }, { passive: false });
-
-  canvas.addEventListener('touchend', function (e) {
-    e.preventDefault();
-    sigDrawing = false;
-  }, { passive: false });
-}
-
-function markSig() {
-  if (!sigHasMark) {
-    sigHasMark = true;
-    document.getElementById('sigHint').style.display = 'none';
-  }
-}
-
-function clearSig() {
-  sigHasMark = false;
-  const hint = document.getElementById('sigHint');
-  if (hint) hint.style.display = 'block';
-  const canvas = document.getElementById('sigCanvas');
-  if (!canvas || canvas.width < 1) return;
-  const ctx = canvas.getContext('2d');
-  ctx.save();
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.restore();
-}
-
-function getSigDataURL() {
-  return document.getElementById('sigCanvas').toDataURL('image/png');
-}
-
-// ══════════════════════════════════════════════════════
 // 데이터 수집
 // ══════════════════════════════════════════════════════
 function collectData(opts) {
@@ -2369,14 +2038,22 @@ function collectData(opts) {
   const startLabel = formatStartDateLabel(startDateVal);
 
   const hol = window._holidaySet || new Set();
-  const sessionDTs = computeSessionDates(startDateVal, days, sessions, hol);
+  const manualScheduleDates = isManualScheduleDates();
+  const sessionDTs = manualScheduleDates
+    ? computeFirstSlotPerDay(startDateVal, days, hol)
+    : computeSessionDates(startDateVal, days, sessions, hol);
   const sessionDatesFormatted = sessionDTs.map(formatSessionDateKo);
   const sessionRangeText = sessionDatesFormatted.length >= 2
     ? `${sessionDatesFormatted[0]} ~ ${sessionDatesFormatted[sessionDatesFormatted.length - 1]}`
     : (sessionDatesFormatted[0] || '');
-  const sessionDatesNote = hol.size > 0
-    ? '※ 예정 관리일은 공공데이터포털 휴일 정보를 반영해 조정되었습니다.'
-    : '';
+  const sessionNotes = [];
+  if (manualScheduleDates) {
+    sessionNotes.push('※ 일자 수동 입력: 선택 요일·시간마다 시트 예약 1회만 기록됩니다. 나머지 회차는 직접 입력해 주세요.');
+  }
+  if (hol.size > 0) {
+    sessionNotes.push('※ 예정 관리일은 공공데이터포털 휴일 정보를 반영해 조정되었습니다.');
+  }
+  const sessionDatesNote = sessionNotes.join(' ');
 
   return {
     name:        document.getElementById('name').value.trim(),
@@ -2393,7 +2070,8 @@ function collectData(opts) {
     schedule:    schedule,
     sessions:    sessions,
     amount:      amount,
-    signature:   opts.includeSignature === false ? '' : getSigDataURL(),
+    manualScheduleDates: manualScheduleDates,
+    signature:   '',
     submittedAt: new Date().toISOString(),
     sessionDatesFormatted,
     sessionRangeText,
@@ -2485,17 +2163,11 @@ function runPostSubmitBackground_(data) {
 }
 
 async function submitForm() {
-  if (!document.getElementById('agree1').checked ||
-      !document.getElementById('agree2').checked) {
-    alert('약관에 동의해주세요.'); return;
-  }
-  if (!sigHasMark) {
-    alert('서명을 해주세요.'); return;
-  }
+  await fetchScheduleBusyBounded(2200);
+  if (!validatePage2()) return;
 
   window._holidaySet = new Set();
-  const data = collectData({ includeSignature: false });
-  data.signature = getSigDataURL();
+  const data = collectData();
 
   const dayCheck = validateSessionsMatchManageDays(data.days, data.sessions);
   if (!dayCheck.ok) {
@@ -2554,8 +2226,11 @@ function showSuccess(data) {
   const datesLines = (data.sessionDatesFormatted || []).map(function (s, i) {
     return `${i + 1}. ${s}`;
   }).join('<br>');
+  const datesLabel = data.manualScheduleDates
+    ? `시트 예약 (요일별 1회 · ${data.sessions} 중 ${(data.sessionDatesFormatted || []).length}건)`
+    : `예정 관리일 (${data.sessions})`;
   const datesBlock = datesLines
-    ? `<div class="summary-row summary-dates"><span class="s-label">예정 관리일 (${data.sessions})</span><span class="s-val s-dates">${datesLines}</span></div>`
+    ? `<div class="summary-row summary-dates"><span class="s-label">${datesLabel}</span><span class="s-val s-dates">${datesLines}</span></div>`
     : '';
   const rangeRow = data.sessionRangeText && parseSessionCount(data.sessions) > 1
     ? `<div class="summary-row"><span class="s-label">관리 기간</span><span class="s-val">${data.sessionRangeText}</span></div>`
@@ -2701,8 +2376,9 @@ function buildA4(data) {
   const sessionRows = (data.sessionDatesFormatted || []).map(function (s, i) {
     return `<tr><td class="lbl">${i + 1}회차</td><td colspan="3">${s}</td></tr>`;
   }).join('');
+  const sessionHeader = data.manualScheduleDates ? '시트 예약 (요일별 1회)' : '예정 관리일';
   const sessionBlock = sessionRows
-    ? `<tr><td class="lbl">예정 관리일</td><td colspan="3">${data.sessionRangeText || ''}</td></tr>${sessionRows}`
+    ? `<tr><td class="lbl">${sessionHeader}</td><td colspan="3">${data.sessionRangeText || ''}</td></tr>${sessionRows}`
     : '';
 
   document.getElementById('a4Doc').innerHTML = `
@@ -2716,16 +2392,8 @@ function buildA4(data) {
       ${sessionBlock}
     </table>
     ${data.sessionDatesNote ? `<div class="a4-section" style="font-size:11px;color:#555;">${data.sessionDatesNote}</div>` : ''}
-    <div class="a4-section">
-      <h3>이용 약관 동의</h3>
-      1. 관리 전/후 자세 기록용 사진 촬영에 동의합니다.<br>
-      2. 지각 시 예약된 시간 내에서만 진행됩니다.<br>
-      3. 일정 변경은 예약일 2일 전까지 가능합니다.<br>
-      4. 취소는 첫 예약일 5일 전까지 가능합니다.<br>
-      5. 결제 비용은 다음 달 관리비에 포함됩니다.<br><br>
-      본인은 위 약관을 확인하고 동의합니다.<br><br>
-      신청일: ${new Date(data.submittedAt).toLocaleDateString('ko-KR')}&nbsp;&nbsp;&nbsp;
-      신청인: <span class="a4-sig"><img src="${data.signature}" alt="서명"></span> (서명)
+    <div class="a4-section" style="font-size:12px;color:#555;margin-top:16px;">
+      신청일: ${new Date(data.submittedAt).toLocaleDateString('ko-KR')}&nbsp;&nbsp;&nbsp;신청인: ${data.name}
     </div>
   `;
 }
