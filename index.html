@@ -152,8 +152,8 @@ body {
 .skip-alimtalk-row {
   display: flex;
   justify-content: flex-end;
-  margin-top: 20px;
-  margin-bottom: 4px;
+  margin-top: 10px;
+  margin-bottom: 0;
 }
 .skip-alimtalk-check {
   display: inline-flex;
@@ -473,12 +473,12 @@ body {
 .pay-grid.pay-grid-4 {
   grid-template-columns: 1fr 1fr;
 }
-.pay-custom-block { margin-top: 12px; }
+.pay-custom-block { margin-top: 12px; margin-bottom: 0; }
 .pay-item.pay-item--custom.pay-item--unified { display: block; }
 .pay-item.pay-item--unified .pay-custom-panel {
   display: block;
-  min-height: auto;
-  padding: 16px;
+  min-height: 0;
+  padding: 12px 14px 10px;
   border: 1.5px solid var(--border);
   border-radius: 14px;
   cursor: pointer;
@@ -496,6 +496,15 @@ body {
 .pay-item.pay-item--unified .pay-custom-head-label {
   display: block;
   cursor: pointer;
+  min-height: 0;
+  height: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+.pay-item.pay-item--unified .pay-custom-head-label:hover {
+  border-color: transparent;
 }
 .pay-item.pay-item--unified .pay-custom-head .pay-name {
   font-size: 14px;
@@ -509,11 +518,11 @@ body {
 }
 .pay-item.pay-item--unified .pay-custom-fields {
   display: none;
-  margin-top: 14px;
-  padding-top: 14px;
+  margin-top: 10px;
+  padding-top: 10px;
   border-top: 1px solid #e5e7eb;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 10px;
   cursor: default;
 }
 .pay-item.pay-item--unified input:checked + .pay-custom-panel .pay-custom-fields {
