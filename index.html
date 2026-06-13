@@ -557,6 +557,10 @@ body {
   border-color: var(--teal);
   box-shadow: 0 0 0 3px rgba(0, 176, 155, 0.12);
 }
+.pay-custom-amount-input {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
 @media (max-width: 520px) {
   .pay-item.pay-item--unified .pay-custom-fields { grid-template-columns: 1fr; }
 }
@@ -1121,7 +1125,7 @@ body {
                 </div>
                 <div class="pay-custom-field">
                   <span class="pay-custom-field-label">금액 (원)</span>
-                  <input type="number" id="yaksuCustomAmount" min="1000" step="1000" inputmode="numeric" placeholder="예: 550000" oninput="syncCustomPaymentValues()">
+                  <input type="text" id="yaksuCustomAmount" inputmode="numeric" autocomplete="off" placeholder="예: 550,000" class="pay-custom-amount-input">
                 </div>
               </div>
             </div>
@@ -1159,7 +1163,7 @@ body {
                 </div>
                 <div class="pay-custom-field">
                   <span class="pay-custom-field-label">금액 (원)</span>
-                  <input type="number" id="incheonCustomAmount" min="1000" step="1000" inputmode="numeric" placeholder="예: 550000" oninput="syncCustomPaymentValues()">
+                  <input type="text" id="incheonCustomAmount" inputmode="numeric" autocomplete="off" placeholder="예: 550,000" class="pay-custom-amount-input">
                 </div>
               </div>
             </div>
@@ -1338,11 +1342,49 @@ function updateCustomPaymentFieldsVisibility() {
   /* 입력란 표시는 CSS(.pay-item--unified input:checked + .pay-custom-panel)로 처리 */
 }
 
+function parseCustomAmountDigits_(raw) {
+  return String(raw || '').replace(/\D/g, '').slice(0, 12);
+}
+
+function formatCustomAmountDisplay_(digits) {
+  if (!digits) return '';
+  var n = parseInt(digits, 10);
+  if (!n || isNaN(n)) return '';
+  return n.toLocaleString('ko-KR');
+}
+
+function onCustomAmountInput_(el) {
+  if (!el) return;
+  var sel = el.selectionStart;
+  var prev = String(el.value || '');
+  var digitsBefore = parseCustomAmountDigits_(prev.slice(0, sel)).length;
+  var digits = parseCustomAmountDigits_(prev);
+  el.value = formatCustomAmountDisplay_(digits);
+
+  var newPos = el.value.length;
+  if (digitsBefore > 0) {
+    var count = 0;
+    for (var i = 0; i < el.value.length; i++) {
+      if (/\d/.test(el.value.charAt(i))) {
+        count += 1;
+        if (count === digitsBefore) {
+          newPos = i + 1;
+          break;
+        }
+      }
+    }
+  } else {
+    newPos = 0;
+  }
+  try { el.setSelectionRange(newPos, newPos); } catch (err) {}
+  syncCustomPaymentValues();
+}
+
 function syncCustomPaymentValues() {
   const ys = getCustomPaymentFields('약수');
   if (ys.radio) {
     const sessions = parseInt(String(ys.sessions && ys.sessions.value || '').replace(/\D/g, ''), 10) || 0;
-    const amount = parseInt(String(ys.amount && ys.amount.value || '').replace(/\D/g, ''), 10) || 0;
+    const amount = parseInt(parseCustomAmountDigits_(ys.amount && ys.amount.value), 10) || 0;
     ys.radio.value = sessions > 0
       ? ('약수|' + sessions + '회|' + amount)
       : '약수|기타|0';
@@ -1352,7 +1394,7 @@ function syncCustomPaymentValues() {
     const dur = document.querySelector('input[name="careDuration"]:checked');
     const mins = dur ? dur.value : '50';
     const sessions = parseInt(String(ic.sessions && ic.sessions.value || '').replace(/\D/g, ''), 10) || 0;
-    const amount = parseInt(String(ic.amount && ic.amount.value || '').replace(/\D/g, ''), 10) || 0;
+    const amount = parseInt(parseCustomAmountDigits_(ic.amount && ic.amount.value), 10) || 0;
     ic.radio.value = sessions > 0
       ? ('인천|' + mins + '|' + sessions + '회|' + amount)
       : ('인천|' + mins + '|기타|0');
@@ -1416,6 +1458,11 @@ function setupCustomPaymentInputs() {
       var el = document.getElementById(id);
       if (!el || el._customPayBound) return;
       el._customPayBound = true;
+      if (id === cfg.amount) {
+        el.addEventListener('input', function () {
+          onCustomAmountInput_(el);
+        });
+      }
       el.addEventListener('mousedown', function (e) {
         e.stopPropagation();
         if (radio && !radio.checked) {
@@ -1446,7 +1493,7 @@ function validateCustomPayment(branch) {
   if (!cfg.radio || !cfg.radio.checked) return { ok: true, message: '' };
   syncCustomPaymentValues();
   const sessions = parseInt(String(cfg.sessions && cfg.sessions.value || '').replace(/\D/g, ''), 10) || 0;
-  const amount = parseInt(String(cfg.amount && cfg.amount.value || '').replace(/\D/g, ''), 10) || 0;
+  const amount = parseInt(parseCustomAmountDigits_(cfg.amount && cfg.amount.value), 10) || 0;
   if (sessions < 1) {
     return { ok: false, message: '기타 금액을 선택하셨다면 회차를 입력해 주세요.' };
   }
