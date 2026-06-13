@@ -475,7 +475,7 @@ body {
 }
 .pay-custom-block { margin-top: 12px; }
 .pay-item.pay-item--custom.pay-item--unified { display: block; }
-.pay-item.pay-item--unified label {
+.pay-item.pay-item--unified .pay-custom-panel {
   display: block;
   min-height: auto;
   padding: 16px;
@@ -485,13 +485,18 @@ body {
   transition: all .2s;
   background: var(--bg);
 }
-.pay-item.pay-item--unified label:hover { border-color: var(--teal); }
-.pay-item.pay-item--unified input:checked + label {
+.pay-item.pay-item--unified .pay-custom-panel:hover { border-color: var(--teal); }
+.pay-item.pay-item--unified input:checked + .pay-custom-panel {
   background: #fff;
   border: 2px solid var(--teal);
   box-shadow: 0 4px 14px rgba(0, 176, 155, 0.16);
+  cursor: default;
 }
-.pay-item.pay-item--unified input:checked + label .pay-name { color: var(--teal); }
+.pay-item.pay-item--unified input:checked + .pay-custom-panel .pay-name { color: var(--teal); }
+.pay-item.pay-item--unified .pay-custom-head-label {
+  display: block;
+  cursor: pointer;
+}
 .pay-item.pay-item--unified .pay-custom-head .pay-name {
   font-size: 14px;
   font-weight: 700;
@@ -509,11 +514,12 @@ body {
   border-top: 1px solid #e5e7eb;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+  cursor: default;
 }
-.pay-item.pay-item--unified input:checked + label .pay-custom-fields {
+.pay-item.pay-item--unified input:checked + .pay-custom-panel .pay-custom-fields {
   display: grid;
 }
-.pay-custom-field label {
+.pay-custom-field-label {
   display: block;
   font-size: 12px;
   font-weight: 700;
@@ -529,6 +535,9 @@ body {
   font-weight: 700;
   font-family: inherit;
   box-sizing: border-box;
+  background: #fff;
+  color: var(--text);
+  cursor: text;
 }
 .pay-custom-field input:focus {
   outline: none;
@@ -1085,22 +1094,24 @@ body {
         <div class="pay-custom-block" id="yaksuPayCustomBlock">
           <div class="pay-item pay-item--custom pay-item--unified">
             <input type="radio" name="payment" id="payYsCustom" value="약수|기타|0" onchange="onPaymentChange()">
-            <label for="payYsCustom">
-              <div class="pay-custom-head">
-                <div class="pay-name">기타 금액</div>
-                <div class="pay-desc">표준 이용권 외 금액 직접 입력</div>
-              </div>
+            <div class="pay-custom-panel">
+              <label for="payYsCustom" class="pay-custom-head-label">
+                <div class="pay-custom-head">
+                  <div class="pay-name">기타 금액</div>
+                  <div class="pay-desc">표준 이용권 외 금액 직접 입력</div>
+                </div>
+              </label>
               <div class="pay-custom-fields" id="yaksuCustomFields">
                 <div class="pay-custom-field">
-                  <label for="yaksuCustomSessions">회차</label>
-                  <input type="number" id="yaksuCustomSessions" min="1" max="99" inputmode="numeric" placeholder="예: 8" oninput="syncCustomPaymentValues()" onclick="event.stopPropagation()">
+                  <span class="pay-custom-field-label">회차</span>
+                  <input type="number" id="yaksuCustomSessions" min="1" max="99" inputmode="numeric" placeholder="예: 8" oninput="syncCustomPaymentValues()">
                 </div>
                 <div class="pay-custom-field">
-                  <label for="yaksuCustomAmount">금액 (원)</label>
-                  <input type="number" id="yaksuCustomAmount" min="1000" step="1000" inputmode="numeric" placeholder="예: 550000" oninput="syncCustomPaymentValues()" onclick="event.stopPropagation()">
+                  <span class="pay-custom-field-label">금액 (원)</span>
+                  <input type="number" id="yaksuCustomAmount" min="1000" step="1000" inputmode="numeric" placeholder="예: 550000" oninput="syncCustomPaymentValues()">
                 </div>
               </div>
-            </label>
+            </div>
           </div>
         </div>
       </div>
@@ -1121,22 +1132,24 @@ body {
         <div class="pay-custom-block" id="incheonPayCustomBlock">
           <div class="pay-item pay-item--custom pay-item--unified">
             <input type="radio" name="payment" id="payIcCustom" value="인천|50|기타|0" onchange="onPaymentChange()">
-            <label for="payIcCustom">
-              <div class="pay-custom-head">
-                <div class="pay-name">기타 금액</div>
-                <div class="pay-desc">표준 이용권 외 금액 직접 입력</div>
-              </div>
+            <div class="pay-custom-panel">
+              <label for="payIcCustom" class="pay-custom-head-label">
+                <div class="pay-custom-head">
+                  <div class="pay-name">기타 금액</div>
+                  <div class="pay-desc">표준 이용권 외 금액 직접 입력</div>
+                </div>
+              </label>
               <div class="pay-custom-fields" id="incheonCustomFields">
                 <div class="pay-custom-field">
-                  <label for="incheonCustomSessions">회차</label>
-                  <input type="number" id="incheonCustomSessions" min="1" max="99" inputmode="numeric" placeholder="예: 8" oninput="syncCustomPaymentValues()" onclick="event.stopPropagation()">
+                  <span class="pay-custom-field-label">회차</span>
+                  <input type="number" id="incheonCustomSessions" min="1" max="99" inputmode="numeric" placeholder="예: 8" oninput="syncCustomPaymentValues()">
                 </div>
                 <div class="pay-custom-field">
-                  <label for="incheonCustomAmount">금액 (원)</label>
-                  <input type="number" id="incheonCustomAmount" min="1000" step="1000" inputmode="numeric" placeholder="예: 550000" oninput="syncCustomPaymentValues()" onclick="event.stopPropagation()">
+                  <span class="pay-custom-field-label">금액 (원)</span>
+                  <input type="number" id="incheonCustomAmount" min="1000" step="1000" inputmode="numeric" placeholder="예: 550000" oninput="syncCustomPaymentValues()">
                 </div>
               </div>
-            </label>
+            </div>
           </div>
         </div>
       </div>
@@ -1309,7 +1322,7 @@ function getCustomPaymentFields(branch) {
 }
 
 function updateCustomPaymentFieldsVisibility() {
-  /* 입력란 표시는 CSS(.pay-item--unified input:checked)로 처리 */
+  /* 입력란 표시는 CSS(.pay-item--unified input:checked + .pay-custom-panel)로 처리 */
 }
 
 function syncCustomPaymentValues() {
@@ -1336,6 +1349,45 @@ function syncCustomPaymentValues() {
 
 function onPaymentChange() {
   syncCustomPaymentValues();
+}
+
+/** 기타 금액 입력란 클릭 시 라디오 자동 선택 + 입력 가능하도록 */
+function setupCustomPaymentInputs() {
+  [
+    { sessions: 'yaksuCustomSessions', amount: 'yaksuCustomAmount', radio: 'payYsCustom' },
+    { sessions: 'incheonCustomSessions', amount: 'incheonCustomAmount', radio: 'payIcCustom' },
+  ].forEach(function (cfg) {
+    [cfg.sessions, cfg.amount].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el || el._customPayBound) return;
+      el._customPayBound = true;
+      function ensureCustomSelected() {
+        var radio = document.getElementById(cfg.radio);
+        if (radio && !radio.checked) {
+          radio.checked = true;
+          onPaymentChange();
+        }
+      }
+      el.addEventListener('mousedown', function (e) {
+        e.stopPropagation();
+        ensureCustomSelected();
+      });
+      el.addEventListener('focus', ensureCustomSelected);
+    });
+    var fields = document.getElementById(cfg.sessions);
+    if (fields) fields = fields.closest('.pay-custom-fields');
+    if (fields && !fields._customPayBound) {
+      fields._customPayBound = true;
+      fields.addEventListener('mousedown', function (e) {
+        if (e.target.tagName === 'INPUT') return;
+        var radio = document.getElementById(cfg.radio);
+        if (radio && !radio.checked) {
+          radio.checked = true;
+          onPaymentChange();
+        }
+      });
+    }
+  });
 }
 
 function bindPaymentChangeListeners() {
@@ -2778,6 +2830,7 @@ window.addEventListener('DOMContentLoaded', () => {
   renderIncheonPayGrid();
   onStoreBranchChange();
   setupPhoneInputs();
+  setupCustomPaymentInputs();
   setupPage1SchedulePrefetch();
   setupEnterToAdvance();
 
