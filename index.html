@@ -239,6 +239,30 @@ body {
   margin-top: 3px;
   line-height: 1.3;
 }
+.choice-item--add {
+  display: flex;
+  align-items: stretch;
+}
+.day-add-btn {
+  width: 100%;
+  min-height: 56px;
+  border: 1.5px dashed var(--teal);
+  border-radius: 12px;
+  background: var(--teal-lt);
+  color: var(--teal);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: all .2s;
+  font-family: inherit;
+}
+.day-add-btn:hover {
+  background: linear-gradient(135deg, var(--teal), var(--green));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0,176,155,0.3);
+}
 
 /* 결제 옵션 */
 .pay-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: stretch; }
@@ -571,6 +595,31 @@ body {
 .time-select-row select:focus {
   border-color: var(--teal);
   box-shadow: 0 0 0 3px rgba(0, 176, 155, 0.12);
+}
+.time-select-row--extra {
+  border-style: dashed;
+  border-color: rgba(0, 176, 155, 0.45);
+}
+.time-day-select {
+  flex: 0 0 72px;
+  min-width: 72px;
+}
+.time-slot-remove {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  font-family: inherit;
+}
+.time-slot-remove:hover {
+  background: rgba(220, 53, 69, 0.12);
+  color: #c0392b;
 }
 .schedule-legend {
   font-size: 12px;
@@ -933,6 +982,9 @@ body {
           <input type="checkbox" id="d6" value="토" onchange="buildTimePickers()">
           <label for="d6"><span class="ch-main">토</span></label>
         </div>
+        <div class="choice-item choice-item--add">
+          <button type="button" class="day-add-btn" onclick="addExtraTimeSlot(event)" title="요일·시간 추가">+</button>
+        </div>
       </div>
     </div>
 
@@ -1289,16 +1341,17 @@ function getSelectedSessionsLabel() {
   return '';
 }
 
-/** 1회 결제 시 관리 요일은 1개만 가능 */
-function validateSessionsMatchManageDays(days, sessionsLabel) {
+/** 1회 결제 시 관리 요일·시간 슬롯 검증 */
+function validateSessionsMatchManageDays(days, sessionsLabel, scheduleSlots) {
   const sessionCount = parseSessionCount(sessionsLabel);
   const dayCount = (days || []).length;
-  if (sessionCount === 1 && dayCount > 1) {
+  const slotCount = (scheduleSlots && scheduleSlots.length) ? scheduleSlots.length : dayCount;
+  if (sessionCount === 1 && (dayCount > 1 || slotCount > 1)) {
     return {
       ok: false,
       message:
         '결제 회차와 관리 요일을 확인해 주세요.\n\n' +
-        '1회 이용권은 관리 요일을 하루만 선택할 수 있습니다.\n' +
+        '1회 이용권은 관리 요일·시간을 1개만 선택할 수 있습니다.\n' +
         '요일을 1개로 줄이거나, 4회 이상 이용권을 선택해 주세요.',
     };
   }
@@ -1526,6 +1579,119 @@ function computeSessionDates(startAnchorYmd, daysOrdered, sessionsLabel, holiday
   return adjustSessionsForHolidays(raw, holidaySet, sortedDays);
 }
 
+/** 주간 패턴(요일·시간 슬롯) 기준 회차별 날짜·시간 */
+function dateForDayInWeek_(weekMonday, dayKr) {
+  const targetJs = DAY_MAP_KO_TO_JS[dayKr];
+  if (targetJs == null) return null;
+  const d = new Date(weekMonday.getFullYear(), weekMonday.getMonth(), weekMonday.getDate());
+  d.setDate(d.getDate() + (targetJs - 1));
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function compareTimeStr_(a, b) {
+  const pa = String(a || '').split(':');
+  const pb = String(b || '').split(':');
+  const ma = (parseInt(pa[0], 10) || 0) * 60 + (parseInt(pa[1], 10) || 0);
+  const mb = (parseInt(pb[0], 10) || 0) * 60 + (parseInt(pb[1], 10) || 0);
+  return ma - mb;
+}
+
+function bumpSlotDateForHoliday_(d0, holidaySet, dayKr) {
+  let d = new Date(d0.getFullYear(), d0.getMonth(), d0.getDate());
+  let guard = 0;
+  while (guard++ < 120) {
+    const key = formatDateForDB(d);
+    const kor = JS_TO_KOR[d.getDay()];
+    const okHol = !holidaySet || holidaySet.size === 0 || !holidaySet.has(key);
+    if (okHol && kor === dayKr) return d;
+    d.setDate(d.getDate() + 1);
+  }
+  return new Date(d0.getFullYear(), d0.getMonth(), d0.getDate());
+}
+
+function computeSessionSlotsFromPattern(startAnchorYmd, scheduleSlots, sessionsLabel, holidaySet) {
+  const totalSessions = parseSessionCount(sessionsLabel);
+  if (!startAnchorYmd || !scheduleSlots || scheduleSlots.length === 0) return [];
+  const anchor = parseYMD(startAnchorYmd);
+  if (!anchor || isNaN(anchor.getTime())) return [];
+  anchor.setHours(0, 0, 0, 0);
+  const anchorMs = anchor.getTime();
+
+  const raw = [];
+  let weekStart = getCurrentWeekMonday(anchor);
+  let guard = 0;
+  while (raw.length < totalSessions && guard++ < 300) {
+    scheduleSlots.forEach(function (slot) {
+      if (raw.length >= totalSessions) return;
+      const d = dateForDayInWeek_(weekStart, slot.day);
+      if (!d || d.getTime() < anchorMs) return;
+      raw.push({ date: d, day: slot.day, time: slot.time });
+    });
+    weekStart = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate());
+    weekStart.setDate(weekStart.getDate() + 7);
+  }
+
+  raw.sort(function (a, b) {
+    const diff = a.date.getTime() - b.date.getTime();
+    if (diff !== 0) return diff;
+    return compareTimeStr_(a.time, b.time);
+  });
+
+  const picked = raw.slice(0, totalSessions);
+  if (!holidaySet || holidaySet.size === 0) return picked;
+  return picked.map(function (slot) {
+    return {
+      date: bumpSlotDateForHoliday_(slot.date, holidaySet, slot.day),
+      day: slot.day,
+      time: slot.time,
+    };
+  });
+}
+
+/** 일자 수동 입력: 슬롯마다 첫 시작일 이후 해당 요일 1회 (같은 요일 복수 슬롯은 같은 날짜) */
+function computeManualSessionSlots(startAnchorYmd, scheduleSlots, holidaySet) {
+  if (!startAnchorYmd || !scheduleSlots || scheduleSlots.length === 0) return [];
+  const anchor = parseYMD(startAnchorYmd);
+  if (!anchor || isNaN(anchor.getTime())) return [];
+
+  const out = [];
+  scheduleSlots.forEach(function (slot) {
+    const targetJs = DAY_MAP_KO_TO_JS[slot.day];
+    if (targetJs == null) return;
+    let d = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate());
+    let guard = 0;
+    while (guard++ < 21) {
+      if (d.getDay() === targetJs) {
+        const adj = bumpSlotDateForHoliday_(d, holidaySet || new Set(), slot.day);
+        out.push({ date: adj, day: slot.day, time: slot.time });
+        break;
+      }
+      d.setDate(d.getDate() + 1);
+    }
+  });
+
+  out.sort(function (a, b) {
+    const diff = a.date.getTime() - b.date.getTime();
+    if (diff !== 0) return diff;
+    return compareTimeStr_(a.time, b.time);
+  });
+  return out;
+}
+
+function formatSessionSlotKo(slot) {
+  if (!slot || !slot.date) return '';
+  const dt = slot.date;
+  const time = slot.time ? ' ' + slot.time : '';
+  return `${dt.getMonth() + 1}/${dt.getDate()}(${WEEKDAY_NAMES[dt.getDay()]})${time}`;
+}
+
+function formatScheduleSlotsText(scheduleSlots) {
+  return (scheduleSlots || []).map(function (s) {
+    return `${s.day} ${s.time}`;
+  }).join(', ');
+}
+
 /** 일자 수동 입력: 선택 요일마다 첫 시작일 이후 해당 요일 1회만 */
 function computeFirstSlotPerDay(startAnchorYmd, daysOrdered, holidaySet) {
   if (!startAnchorYmd || !daysOrdered || daysOrdered.length === 0) return [];
@@ -1614,6 +1780,7 @@ function fmtDate(d) {
 function updateWeekDates() {
   // 요일 선택 리셋
   document.querySelectorAll('#dayGrid input').forEach(cb => cb.checked = false);
+  _extraTimeSlotIds = [];
   buildTimePickers();
 }
 
@@ -1692,6 +1859,16 @@ function isSlotBookedForInstructor(ymd, timeStr, instructorName) {
 // ══════════════════════════════════════════════════════
 // 요일별 시간 피커 (시간 / 분 선택)
 // ══════════════════════════════════════════════════════
+var _extraTimeSlotIds = [];
+var _extraSlotCounter = 0;
+
+function getCheckedDays() {
+  return DAYS_ORDER.filter(function (d) {
+    const el = document.querySelector('#dayGrid input[value="' + d + '"]');
+    return el && el.checked;
+  });
+}
+
 function formatTimeSlotFromSelect(hourVal, minuteVal) {
   if (!hourVal) return '';
   const h = parseInt(hourVal, 10);
@@ -1704,33 +1881,161 @@ function formatTimeSlotFromSelect(hourVal, minuteVal) {
   return slot;
 }
 
-function getTimeForDay(day) {
-  const hourSel = document.querySelector('.time-hour[data-day="' + day + '"]');
-  const minSel = document.querySelector('.time-minute[data-day="' + day + '"]');
+function getTimeForSlot(slotId) {
+  const row = document.querySelector('.time-select-row[data-slot-id="' + slotId + '"]');
+  if (!row) return '';
+  const hourSel = row.querySelector('.time-hour');
+  const minSel = row.querySelector('.time-minute');
   if (!hourSel || !hourSel.value) return '';
   return formatTimeSlotFromSelect(hourSel.value, minSel ? minSel.value : '00');
 }
 
-function buildTimePickers() {
-  const selectedDays = DAYS_ORDER.filter(function (d) {
-    const el = document.querySelector('#dayGrid input[value="' + d + '"]');
-    return el && el.checked;
+function getTimeForDay(day) {
+  return getTimeForSlot(day);
+}
+
+function snapshotTimePickerState(wrap) {
+  const primary = {};
+  const extra = {};
+  wrap.querySelectorAll('.time-select-row').forEach(function (row) {
+    const slotId = row.dataset.slotId;
+    if (!slotId) return;
+    const hourSel = row.querySelector('.time-hour');
+    const minSel = row.querySelector('.time-minute');
+    const daySel = row.querySelector('.time-day-select');
+    const data = {
+      hour: hourSel ? hourSel.value : '',
+      minute: minSel ? minSel.value : '00',
+      day: daySel ? daySel.value : slotId,
+    };
+    if (slotId.indexOf('extra-') === 0) extra[slotId] = data;
+    else primary[slotId] = data;
   });
+  return { primary: primary, extra: extra };
+}
+
+function appendHourMinuteSelects(row, slotId, prev) {
+  prev = prev || { hour: '', minute: '00' };
+
+  const hourSel = document.createElement('select');
+  hourSel.className = 'time-hour';
+  hourSel.dataset.slotId = slotId;
+  hourSel.innerHTML = '<option value="">시간 선택</option>';
+  TIME_HOUR_OPTIONS.forEach(function (opt) {
+    const o = document.createElement('option');
+    o.value = opt.v;
+    o.textContent = opt.l;
+    if (prev.hour === opt.v) o.selected = true;
+    hourSel.appendChild(o);
+  });
+  row.appendChild(hourSel);
+
+  const minSel = document.createElement('select');
+  minSel.className = 'time-minute';
+  minSel.dataset.slotId = slotId;
+  minSel.innerHTML =
+    '<option value="00"' + (prev.minute === '00' || !prev.minute ? ' selected' : '') + '>00분</option>' +
+    '<option value="30"' + (prev.minute === '30' ? ' selected' : '') + '>30분</option>';
+  row.appendChild(minSel);
+}
+
+function appendPrimaryTimeRow(wrap, day, prev) {
+  const row = document.createElement('div');
+  row.className = 'time-select-row';
+  row.dataset.slotId = day;
+
+  const dayLabel = document.createElement('div');
+  dayLabel.className = 'time-select-day';
+  dayLabel.textContent = day;
+  row.appendChild(dayLabel);
+
+  appendHourMinuteSelects(row, day, prev);
+  wrap.appendChild(row);
+}
+
+function appendExtraTimeRow(wrap, slotId, dayOptions, prev) {
+  prev = prev || { day: dayOptions[0] || '토', hour: '', minute: '00' };
+
+  const row = document.createElement('div');
+  row.className = 'time-select-row time-select-row--extra';
+  row.dataset.slotId = slotId;
+
+  const daySel = document.createElement('select');
+  daySel.className = 'time-day-select';
+  dayOptions.forEach(function (d) {
+    const o = document.createElement('option');
+    o.value = d;
+    o.textContent = d + '요일';
+    if (prev.day === d) o.selected = true;
+    daySel.appendChild(o);
+  });
+  row.appendChild(daySel);
+
+  appendHourMinuteSelects(row, slotId, prev);
+
+  const removeBtn = document.createElement('button');
+  removeBtn.type = 'button';
+  removeBtn.className = 'time-slot-remove';
+  removeBtn.title = '삭제';
+  removeBtn.textContent = '×';
+  removeBtn.addEventListener('click', function () {
+    removeExtraTimeSlot(slotId);
+  });
+  row.appendChild(removeBtn);
+
+  wrap.appendChild(row);
+}
+
+function getAllScheduleSlots() {
+  const slots = [];
+  getCheckedDays().forEach(function (day) {
+    const time = getTimeForSlot(day);
+    slots.push({ day: day, time: time });
+  });
+  _extraTimeSlotIds.forEach(function (slotId) {
+    const row = document.querySelector('.time-select-row[data-slot-id="' + slotId + '"]');
+    if (!row) return;
+    const daySel = row.querySelector('.time-day-select');
+    const day = daySel ? daySel.value : '';
+    slots.push({ day: day, time: getTimeForSlot(slotId) });
+  });
+  return slots;
+}
+
+function addExtraTimeSlot(ev) {
+  if (ev) {
+    ev.preventDefault();
+    ev.stopPropagation();
+  }
+  const selectedDays = getCheckedDays();
+  if (selectedDays.length === 0) {
+    alert('먼저 관리 요일을 선택해주세요.');
+    return;
+  }
+  _extraSlotCounter += 1;
+  _extraTimeSlotIds.push('extra-' + _extraSlotCounter);
+  buildTimePickers();
+}
+
+function removeExtraTimeSlot(slotId) {
+  _extraTimeSlotIds = _extraTimeSlotIds.filter(function (id) {
+    return id !== slotId;
+  });
+  buildTimePickers();
+}
+
+function buildTimePickers() {
+  const selectedDays = getCheckedDays();
 
   const wrap = document.getElementById('timePickersWrap');
   const sec = document.getElementById('timeSection');
   if (!wrap || !sec) return;
 
-  const existing = {};
-  wrap.querySelectorAll('.time-hour').forEach(function (sel) {
-    const day = sel.dataset.day;
-    const minSel = wrap.querySelector('.time-minute[data-day="' + day + '"]');
-    existing[day] = { hour: sel.value, minute: minSel ? minSel.value : '00' };
-  });
-
+  const snap = snapshotTimePickerState(wrap);
   wrap.innerHTML = '';
 
   if (selectedDays.length === 0) {
+    _extraTimeSlotIds = [];
     sec.style.display = 'none';
     return;
   }
@@ -1738,38 +2043,14 @@ function buildTimePickers() {
   sec.style.display = 'block';
 
   selectedDays.forEach(function (day) {
-    const prev = existing[day] || { hour: '', minute: '00' };
+    const prev = snap.primary[day] || { hour: '', minute: '00' };
+    appendPrimaryTimeRow(wrap, day, prev);
+  });
 
-    const row = document.createElement('div');
-    row.className = 'time-select-row';
-
-    const dayLabel = document.createElement('div');
-    dayLabel.className = 'time-select-day';
-    dayLabel.textContent = day;
-    row.appendChild(dayLabel);
-
-    const hourSel = document.createElement('select');
-    hourSel.className = 'time-hour';
-    hourSel.dataset.day = day;
-    hourSel.innerHTML = '<option value="">시간 선택</option>';
-    TIME_HOUR_OPTIONS.forEach(function (opt) {
-      const o = document.createElement('option');
-      o.value = opt.v;
-      o.textContent = opt.l;
-      if (prev.hour === opt.v) o.selected = true;
-      hourSel.appendChild(o);
-    });
-    row.appendChild(hourSel);
-
-    const minSel = document.createElement('select');
-    minSel.className = 'time-minute';
-    minSel.dataset.day = day;
-    minSel.innerHTML =
-      '<option value="00"' + (prev.minute === '00' || !prev.minute ? ' selected' : '') + '>00분</option>' +
-      '<option value="30"' + (prev.minute === '30' ? ' selected' : '') + '>30분</option>';
-    row.appendChild(minSel);
-
-    wrap.appendChild(row);
+  _extraTimeSlotIds.forEach(function (slotId) {
+    const prev = snap.extra[slotId] || { day: selectedDays.indexOf('토') !== -1 ? '토' : selectedDays[0], hour: '', minute: '00' };
+    if (selectedDays.indexOf(prev.day) === -1) prev.day = selectedDays[0];
+    appendExtraTimeRow(wrap, slotId, selectedDays, prev);
   });
 
   applyScheduleBusyStyles();
@@ -1960,17 +2241,13 @@ function validatePage2() {
     alert('첫 시작일을 선택해주세요.'); return false;
   }
   syncStartWeekFromDate();
-  const days = DAYS_ORDER.filter(d => {
-    const el = document.querySelector(`#dayGrid input[value="${d}"]`);
-    return el && el.checked;
-  });
+  const days = getCheckedDays();
   if (days.length === 0) { alert('관리 요일을 선택해주세요.'); return false; }
 
+  const scheduleSlots = getAllScheduleSlots();
   let allTimePicked = true;
-  days.forEach(d => {
-    if (!getTimeForDay(d)) {
-      allTimePicked = false;
-    }
+  scheduleSlots.forEach(function (slot) {
+    if (!slot.day || !slot.time) allTimePicked = false;
   });
   if (!allTimePicked) { alert('모든 요일의 관리 시간을 선택해주세요.'); return false; }
 
@@ -1990,7 +2267,7 @@ function validatePage2() {
   syncCustomPaymentValues();
 
   const sessionsLabel = getSelectedSessionsLabel();
-  const dayCheck = validateSessionsMatchManageDays(days, sessionsLabel);
+  const dayCheck = validateSessionsMatchManageDays(days, sessionsLabel, scheduleSlots);
   if (!dayCheck.ok) {
     alert(dayCheck.message);
     return false;
@@ -2003,13 +2280,13 @@ function validatePage2() {
 // ══════════════════════════════════════════════════════
 function collectData(opts) {
   opts = opts || {};
-  const days = DAYS_ORDER.filter(d => {
-    const el = document.querySelector(`#dayGrid input[value="${d}"]`);
-    return el && el.checked;
-  });
+  const days = getCheckedDays();
+  const scheduleSlots = getAllScheduleSlots();
   const schedule = {};
-  days.forEach(d => {
-    schedule[d] = getTimeForDay(d);
+  scheduleSlots.forEach(function (slot) {
+    if (!slot.day) return;
+    if (!schedule[slot.day]) schedule[slot.day] = slot.time;
+    else schedule[slot.day] += ', ' + slot.time;
   });
 
   const storeBranch = getStoreBranch();
@@ -2039,10 +2316,10 @@ function collectData(opts) {
 
   const hol = window._holidaySet || new Set();
   const manualScheduleDates = isManualScheduleDates();
-  const sessionDTs = manualScheduleDates
-    ? computeFirstSlotPerDay(startDateVal, days, hol)
-    : computeSessionDates(startDateVal, days, sessions, hol);
-  const sessionDatesFormatted = sessionDTs.map(formatSessionDateKo);
+  const sessionSlotResults = manualScheduleDates
+    ? computeManualSessionSlots(startDateVal, scheduleSlots, hol)
+    : computeSessionSlotsFromPattern(startDateVal, scheduleSlots, sessions, hol);
+  const sessionDatesFormatted = sessionSlotResults.map(formatSessionSlotKo);
   const sessionRangeText = sessionDatesFormatted.length >= 2
     ? `${sessionDatesFormatted[0]} ~ ${sessionDatesFormatted[sessionDatesFormatted.length - 1]}`
     : (sessionDatesFormatted[0] || '');
@@ -2068,6 +2345,7 @@ function collectData(opts) {
     careDuration: careDuration,
     days:        days,
     schedule:    schedule,
+    scheduleSlots: scheduleSlots,
     sessions:    sessions,
     amount:      amount,
     manualScheduleDates: manualScheduleDates,
@@ -2169,7 +2447,7 @@ async function submitForm() {
   window._holidaySet = new Set();
   const data = collectData();
 
-  const dayCheck = validateSessionsMatchManageDays(data.days, data.sessions);
+  const dayCheck = validateSessionsMatchManageDays(data.days, data.sessions, data.scheduleSlots);
   if (!dayCheck.ok) {
     alert(dayCheck.message);
     return;
@@ -2220,7 +2498,11 @@ function showSuccess(data) {
   const sc = document.getElementById('successCard');
   sc.classList.add('active');
 
-  const scheduleText = data.days.map(d => `${d} ${data.schedule[d]}`).join(', ');
+  const scheduleText = formatScheduleSlotsText(
+    (data.scheduleSlots && data.scheduleSlots.length)
+      ? data.scheduleSlots
+      : (data.days || []).map(function (d) { return { day: d, time: data.schedule[d] }; })
+  );
   const amountText   = formatPaymentDisplay(data);
   const weekLabelTxt = data.startWeekLabel || data.startDate || '';
   const datesLines = (data.sessionDatesFormatted || []).map(function (s, i) {
@@ -2367,9 +2649,12 @@ function returnToStartNow() {
 }
 
 function buildA4(data) {
-  const scheduleRows = data.days.map(d =>
-    `<tr><td class="lbl">${d}요일</td><td>${data.schedule[d]}</td></tr>`
-  ).join('');
+  const slotRows = (data.scheduleSlots && data.scheduleSlots.length)
+    ? data.scheduleSlots
+    : (data.days || []).map(function (d) { return { day: d, time: data.schedule[d] }; });
+  const scheduleRows = slotRows.map(function (s) {
+    return `<tr><td class="lbl">${s.day}요일</td><td>${s.time}</td></tr>`;
+  }).join('');
   const amountText = formatPaymentDisplay(data);
   const weekLabel  = data.startWeekLabel || data.startDate || '';
 
