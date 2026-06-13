@@ -289,7 +289,7 @@ body {
 
 /* 결제 옵션 */
 .pay-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: stretch; }
-.pay-item input { display: none; }
+.pay-item > input[type="radio"] { display: none; }
 .pay-item label {
   display: flex;
   flex-direction: column;
@@ -538,6 +538,10 @@ body {
   background: #fff;
   color: var(--text);
   cursor: text;
+  display: block;
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
 }
 .pay-custom-field input:focus {
   outline: none;
@@ -1349,44 +1353,74 @@ function syncCustomPaymentValues() {
 
 function onPaymentChange() {
   syncCustomPaymentValues();
+  if (document.getElementById('payYsCustom')?.checked) {
+    focusCustomPaymentField_('yaksuCustomSessions');
+  } else if (document.getElementById('payIcCustom')?.checked) {
+    focusCustomPaymentField_('incheonCustomSessions');
+  }
+}
+
+function focusCustomPaymentField_(inputId) {
+  var el = document.getElementById(inputId);
+  if (!el) return;
+  setTimeout(function () {
+    try { el.focus(); } catch (err) {}
+    try { el.select(); } catch (err2) {}
+  }, 30);
 }
 
 /** 기타 금액 입력란 클릭 시 라디오 자동 선택 + 입력 가능하도록 */
 function setupCustomPaymentInputs() {
   [
-    { sessions: 'yaksuCustomSessions', amount: 'yaksuCustomAmount', radio: 'payYsCustom' },
-    { sessions: 'incheonCustomSessions', amount: 'incheonCustomAmount', radio: 'payIcCustom' },
+    { sessions: 'yaksuCustomSessions', amount: 'yaksuCustomAmount', radio: 'payYsCustom', panel: 'yaksuPayCustomBlock' },
+    { sessions: 'incheonCustomSessions', amount: 'incheonCustomAmount', radio: 'payIcCustom', panel: 'incheonPayCustomBlock' },
   ].forEach(function (cfg) {
-    [cfg.sessions, cfg.amount].forEach(function (id) {
-      var el = document.getElementById(id);
-      if (!el || el._customPayBound) return;
-      el._customPayBound = true;
-      function ensureCustomSelected() {
-        var radio = document.getElementById(cfg.radio);
-        if (radio && !radio.checked) {
+    var radio = document.getElementById(cfg.radio);
+    var panel = document.getElementById(cfg.panel);
+    var headLabel = panel ? panel.querySelector('.pay-custom-head-label') : null;
+
+    if (headLabel && !headLabel._customPayBound) {
+      headLabel._customPayBound = true;
+      headLabel.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (radio) {
           radio.checked = true;
           onPaymentChange();
         }
-      }
-      el.addEventListener('mousedown', function (e) {
-        e.stopPropagation();
-        ensureCustomSelected();
       });
-      el.addEventListener('focus', ensureCustomSelected);
-    });
-    var fields = document.getElementById(cfg.sessions);
-    if (fields) fields = fields.closest('.pay-custom-fields');
-    if (fields && !fields._customPayBound) {
-      fields._customPayBound = true;
-      fields.addEventListener('mousedown', function (e) {
-        if (e.target.tagName === 'INPUT') return;
-        var radio = document.getElementById(cfg.radio);
+    }
+
+    if (panel && !panel._customPanelBound) {
+      panel._customPanelBound = true;
+      panel.addEventListener('click', function (e) {
+        var t = e.target;
+        if (t && (t.id === cfg.sessions || t.id === cfg.amount)) return;
+        if (t && t.closest && t.closest('.pay-custom-field')) return;
         if (radio && !radio.checked) {
           radio.checked = true;
           onPaymentChange();
         }
       });
     }
+
+    [cfg.sessions, cfg.amount].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el || el._customPayBound) return;
+      el._customPayBound = true;
+      el.addEventListener('mousedown', function (e) {
+        e.stopPropagation();
+        if (radio && !radio.checked) {
+          radio.checked = true;
+          syncCustomPaymentValues();
+        }
+      });
+      el.addEventListener('focus', function () {
+        if (radio && !radio.checked) {
+          radio.checked = true;
+          syncCustomPaymentValues();
+        }
+      });
+    });
   });
 }
 
