@@ -2278,11 +2278,19 @@ function shouldSplitPhonePaste(raw) {
   return false;
 }
 
+/** 붙여넣기 문자열 앞뒤 따옴표 제거 ("이민우, 010-…" 등) */
+function stripPasteQuotes_(s) {
+  var t = String(s || '').trim();
+  while (/^["'""''`「『]/.test(t)) t = t.slice(1).trim();
+  while (/["'""''`」』]$/.test(t)) t = t.slice(0, -1).trim();
+  return t;
+}
+
 /** 이름+연락처 여러 줄 붙여넣기 (예: "최훈석\n010-4180-5888") */
 function parseNameAndPhonePaste(raw) {
-  var text = String(raw || '');
-  if (!/\r?\n/.test(text)) return null;
-  var lines = text.split(/\r?\n/).map(function (s) { return s.trim(); });
+  var text = stripPasteQuotes_(String(raw || '').replace(/\r\n/g, '\n'));
+  if (!/\n/.test(text)) return null;
+  var lines = text.split(/\n/).map(function (s) { return stripPasteQuotes_(s); });
   var name = (lines[0] || '').trim();
   var phoneLine = '';
   for (var i = 1; i < lines.length; i++) {
