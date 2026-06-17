@@ -1286,10 +1286,10 @@ const INCHEON_PAY = {
     month3: { sessions: '24회', name: '24회 이용권', total: 900000, per: 37500 },
   },
   '80': {
-    single1: { sessions: '1회', name: '1회 이용권', total: 85000, per: 85000 },
-    weekly1: { sessions: '4회', name: '4회 이용권', total: 320000, per: 80000 },
-    weekly2: { sessions: '8회', name: '8회 이용권', recommended: true, total: 600000, per: 75000 },
-    month3: { sessions: '24회', name: '24회 이용권', total: 1680000, per: 70000 },
+    single1: { sessions: '1회', name: '1회 이용권', total: 90000, per: 90000 },
+    weekly1: { sessions: '4회', name: '4회 이용권', total: 340000, per: 85000 },
+    weekly2: { sessions: '8회', name: '8회 이용권', recommended: true, total: 640000, per: 80000 },
+    month3: { sessions: '24회', name: '24회 이용권', total: 1800000, per: 75000 },
   },
 };
 
@@ -2017,7 +2017,23 @@ function scheduleScheduleBusyPrefetch() {
 
 function setupPage1SchedulePrefetch() {
   var name = document.getElementById('name');
-  if (name) name.addEventListener('input', scheduleScheduleBusyPrefetch);
+  if (!name) return;
+  name.addEventListener('input', scheduleScheduleBusyPrefetch);
+  name.addEventListener('paste', function (e) {
+    var raw = (e.clipboardData || window.clipboardData).getData('text');
+    var parsed = parseNameAndPhonePaste(raw);
+    if (!parsed) return;
+    e.preventDefault();
+    name.value = parsed.name;
+    var mid = document.getElementById('phone-mid');
+    var last = document.getElementById('phone-last');
+    if (mid && last) {
+      var parts = parsePastedPhoneParts(parsed.phoneRaw);
+      mid.value = parts.mid;
+      last.value = parts.last;
+    }
+    scheduleScheduleBusyPrefetch();
+  });
 }
 
 function applyScheduleBusyStyles() {
@@ -2260,6 +2276,20 @@ function shouldSplitPhonePaste(raw) {
   if (d.indexOf('010') === 0 && d.length > 3) return true;
   if (d.indexOf('82') === 0 && d.length >= 10) return true;
   return false;
+}
+
+/** 이름+연락처 여러 줄 붙여넣기 (예: "최훈석\n010-4180-5888") */
+function parseNameAndPhonePaste(raw) {
+  var text = String(raw || '');
+  if (!/\r?\n/.test(text)) return null;
+  var lines = text.split(/\r?\n/).map(function (s) { return s.trim(); });
+  var name = (lines[0] || '').trim();
+  var phoneLine = '';
+  for (var i = 1; i < lines.length; i++) {
+    if (lines[i]) { phoneLine = lines[i]; break; }
+  }
+  if (!name || !phoneLine || !shouldSplitPhonePaste(phoneLine)) return null;
+  return { name: name, phoneRaw: phoneLine };
 }
 
 function setupPhoneInputs() {
