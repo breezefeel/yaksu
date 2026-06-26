@@ -2951,6 +2951,81 @@ function startLoadingCountdown(label, seconds) {
 }
 
 // ══════════════════════════════════════════════════════
+// 강사 앱 등 — URL ?name=&phone=&branch=&program=&instructor=
+// ══════════════════════════════════════════════════════
+function initApplicationPrefillFromUrl_() {
+  var params = new URLSearchParams(window.location.search);
+  if (!params.toString()) return;
+
+  var name = (params.get('name') || '').trim();
+  var phone = (params.get('phone') || '').trim();
+  var branch = (params.get('branch') || '').trim();
+  var program = (params.get('program') || '').trim();
+  var instructor = (params.get('instructor') || '').trim();
+
+  if (name) {
+    var nameEl = document.getElementById('name');
+    if (nameEl) nameEl.value = name;
+  }
+
+  if (phone) {
+    var digits = phone.replace(/\D/g, '');
+    var body = digits.length >= 11 && digits.indexOf('010') === 0 ? digits.slice(3) : digits.slice(-8);
+    var mid = document.getElementById('phone-mid');
+    var last = document.getElementById('phone-last');
+    if (mid && body.length >= 4) mid.value = body.slice(0, 4);
+    if (last && body.length > 4) last.value = body.slice(4, 8);
+  }
+
+  if (branch === '약수' || branch === '인천') {
+    var brRadio = document.querySelector('input[name="storeBranch"][value="' + branch + '"]');
+    if (brRadio) {
+      brRadio.checked = true;
+      onStoreBranchChange();
+    }
+  }
+
+  if (program) {
+    var progRadio = document.querySelector('input[name="program"][value="' + program + '"]');
+    if (!progRadio && /P-?\s*스트레칭/i.test(program)) {
+      progRadio = document.getElementById('progStretch');
+    } else if (!progRadio && /작은\s*얼굴/.test(program)) {
+      progRadio = document.getElementById('progFace');
+    } else if (!progRadio && /기능\s*운동/.test(program)) {
+      progRadio = document.getElementById('progFunc');
+    }
+    if (progRadio) progRadio.checked = true;
+  }
+
+  if (instructor) {
+    var matched = false;
+    document.querySelectorAll('input[name="instructor"]').forEach(function (r) {
+      var v = r.value || '';
+      if (v === instructor || instructor.indexOf(v) >= 0 || v.indexOf(instructor) >= 0) {
+        r.checked = true;
+        matched = true;
+      }
+    });
+    if (!matched && /최진옥/.test(instructor)) {
+      var inst2 = document.getElementById('inst2');
+      if (inst2) inst2.checked = true;
+    } else if (!matched && /박준규/.test(instructor)) {
+      var inst1 = document.getElementById('inst1');
+      if (inst1) inst1.checked = true;
+    }
+  }
+
+  if (getPhoneDigits().length === 11) {
+    fetchScheduleBusy().then(function () {
+      applyScheduleBusyStyles();
+      updateScheduleLegendVisibility();
+    });
+  }
+
+  history.replaceState(null, '', window.location.pathname + (window.location.hash || ''));
+}
+
+// ══════════════════════════════════════════════════════
 // 초기화
 // ══════════════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', () => {
@@ -2958,6 +3033,7 @@ window.addEventListener('DOMContentLoaded', () => {
   renderIncheonPayGrid();
   onStoreBranchChange();
   setupPhoneInputs();
+  initApplicationPrefillFromUrl_();
   setupCustomPaymentInputs();
   setupPage1SchedulePrefetch();
   setupEnterToAdvance();
