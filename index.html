@@ -2689,6 +2689,12 @@ async function submitForm() {
     window._lastSubmitResult = json;
 
     if (json.result === 'success') {
+      if (json.skipConfirmAlimtalkSuggest && !data.skipConfirmAlimtalk) {
+        data.skipConfirmAlimtalk = true;
+        data.skipConfirmAlimtalkAuto = true;
+        var skipCb = document.getElementById('skipConfirmAlimtalk');
+        if (skipCb) skipCb.checked = true;
+      }
       window._submittedData = data;
       window._lastDriveSave = {};
       window._lastDriveSaveError = '';
@@ -2715,9 +2721,13 @@ function showSuccess(data) {
   const successMsgEl = sc.querySelector('.success-msg');
   if (successMsgEl) {
     if (data.skipConfirmAlimtalk) {
+      var skipReason = data.skipConfirmAlimtalkAuto
+        ? '오늘 출석 안내 알림톡을 이미 보냈어요.'
+        : '';
       successMsgEl.innerHTML =
         '스케줄·회원 정보가 기록되었습니다.<br>' +
-        '<span style="color:var(--muted);font-size:14px;">(신청 안내 알림톡은 발송하지 않았습니다)</span><br>' +
+        '<span style="color:var(--muted);font-size:14px;">(신청 안내 알림톡은 발송하지 않았습니다' +
+        (skipReason ? ' · ' + skipReason : '') + ')</span><br>' +
         '<strong style="color:var(--teal);">✨ 함께하면 시너지 Up!</strong>';
     } else {
       successMsgEl.innerHTML =
