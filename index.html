@@ -1002,7 +1002,7 @@ body {
         <label class="form-label">관리 요일 <span class="req">*</span> <small style="color:var(--muted);font-weight:400;">(복수 선택 가능)</small></label>
         <label class="manual-dates-check" for="manualScheduleDates">
           <input type="checkbox" id="manualScheduleDates" onchange="onManualScheduleDatesChange()">
-          <span>일자 수동 입력?</span>
+          <span>일자 수동 입력</span>
         </label>
       </div>
       <p class="manual-dates-hint" id="manualScheduleHint" hidden>체크 시 선택한 요일·시간마다 첫 시작일 이후 가장 빠른 1회만 시트에 예약됩니다. 나머지 회차는 직접 입력해 주세요.</p>
@@ -2627,6 +2627,8 @@ function runPostSubmitBackground_(data) {
         branch: data.branch,
         storeBranch: data.storeBranch,
         careDuration: data.careDuration,
+        manualScheduleDates: !!data.manualScheduleDates,
+        sessionDatesFormatted: data.sessionDatesFormatted || [],
       }),
     }).catch(function (err) {
       console.warn('예약 알림톡 백그라운드 실패:', err);
