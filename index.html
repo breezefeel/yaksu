@@ -999,13 +999,13 @@ body {
     <!-- 4. 관리 요일 -->
     <div class="form-group">
       <div class="day-label-row">
-        <label class="form-label">관리 요일 <span class="req">*</span> <small style="color:var(--muted);font-weight:400;">(복수 선택 가능)</small></label>
+        <label class="form-label">관리 요일 <span class="req" id="dayRequiredMark">*</span> <small style="color:var(--muted);font-weight:400;">(복수 선택 가능)</small></label>
         <label class="manual-dates-check" for="manualScheduleDates">
           <input type="checkbox" id="manualScheduleDates" onchange="onManualScheduleDatesChange()">
           <span>일자 수동 입력</span>
         </label>
       </div>
-      <p class="manual-dates-hint" id="manualScheduleHint" hidden>체크 시 선택한 요일·시간마다 첫 시작일 이후 가장 빠른 1회만 시트에 예약됩니다. 나머지 회차는 직접 입력해 주세요.</p>
+      <p class="manual-dates-hint" id="manualScheduleHint" hidden>체크 시 선택한 요일·시간마다 첫 시작일 이후 가장 빠른 1회만 시트에 예약됩니다. 나머지 회차는 직접 입력해 주세요. 요일을 선택하지 않으면 시트 예약 없이 등록만 진행됩니다.</p>
       <div class="choice-grid" id="dayGrid">
         <div class="choice-item">
           <input type="checkbox" id="d1" value="월" onchange="buildTimePickers()">
@@ -1900,8 +1900,11 @@ function isManualScheduleDates() {
 }
 
 function onManualScheduleDatesChange() {
+  const manual = isManualScheduleDates();
   const hint = document.getElementById('manualScheduleHint');
-  if (hint) hint.hidden = !isManualScheduleDates();
+  if (hint) hint.hidden = !manual;
+  const reqMark = document.getElementById('dayRequiredMark');
+  if (reqMark) reqMark.hidden = !!manual;
 }
 
 function yearsSpanForSchedule(startAnchorYmd, sessionsLabel) {
@@ -2451,15 +2454,21 @@ function validatePage2() {
     alert('첫 시작일을 선택해주세요.'); return false;
   }
   syncStartWeekFromDate();
+  const manualDates = isManualScheduleDates();
   const days = getCheckedDays();
-  if (days.length === 0) { alert('관리 요일을 선택해주세요.'); return false; }
+  if (days.length === 0 && !manualDates) {
+    alert('관리 요일을 선택해주세요.');
+    return false;
+  }
 
   const scheduleSlots = getAllScheduleSlots();
-  let allTimePicked = true;
-  scheduleSlots.forEach(function (slot) {
-    if (!slot.day || !slot.time) allTimePicked = false;
-  });
-  if (!allTimePicked) { alert('모든 요일의 관리 시간을 선택해주세요.'); return false; }
+  if (scheduleSlots.length > 0) {
+    let allTimePicked = true;
+    scheduleSlots.forEach(function (slot) {
+      if (!slot.day || !slot.time) allTimePicked = false;
+    });
+    if (!allTimePicked) { alert('모든 요일의 관리 시간을 선택해주세요.'); return false; }
+  }
 
   // 예약현황 중복 검사 비활성화 (페이지 이동/신청을 막지 않도록)
 
