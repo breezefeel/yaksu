@@ -972,18 +972,11 @@ body {
             <div class="inst-name">최진옥 원장</div>
           </label>
         </div>
-        <div class="inst-item" data-branches="약수">
-          <input type="radio" name="instructor" id="inst3" value="강사3">
-          <label for="inst3">
-            <div class="inst-icon">👤</div>
-            <div class="inst-name">강사 3</div>
-          </label>
-        </div>
         <div class="inst-item" data-branches="인천" hidden>
           <input type="radio" name="instructor" id="instIncheon1" value="이상민">
           <label for="instIncheon1">
             <div class="inst-icon">👤</div>
-            <div class="inst-name">이상민 강사</div>
+            <div class="inst-name">이상민 원장</div>
           </label>
         </div>
       </div>
@@ -3033,6 +3026,9 @@ function initApplicationPrefillFromUrl_() {
     } else if (!matched && /박준규/.test(instructor)) {
       var inst1 = document.getElementById('inst1');
       if (inst1) inst1.checked = true;
+    } else if (!matched && /이상민/.test(instructor)) {
+      var instSm = document.getElementById('instIncheon1');
+      if (instSm) instSm.checked = true;
     }
   }
 
