@@ -2575,14 +2575,63 @@ function collectData(opts) {
 // 제출
 // ══════════════════════════════════════════════════════
 function withTimeoutMs(promise, ms, errMsg) {
-  return Promise.race([
-    promise,
-    new Promise(function (_, reject) {
-      setTimeout(function () {
-        reject(new Error(errMsg || ('작업 시간 초과(' + Math.round(ms / 1000) + '초)')));
-      }, ms);
-    }),
-  ]);
+ return Promise.race([
+ promise,
+ new Promise(function (_, reject) {
+ setTimeout(function () {
+ reject(new Error(errMsg || ('작업 시간 초과(' + Math.round(ms / 1000) + '초)')));
+ }, ms);
+ }),
+ ]);
+}
+
+function isRetryableSubmitError_(err) {
+  var msg = String((err && err.message) || err || '');
+  return /Failed to fetch|NetworkError|Load failed|network|시간 초과|너무 오래|TypeError/i.test(msg);
+}
+
+function newClientRequestId_() {
+  try {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  } catch (e) {}
+  return 'req_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
+}
+
+/** GAS 웹앱 POST — 네트워크 단절 시 최대 2회 재시도(서버 clientRequestId 중복 방지) */
+async function postApplicationToGas_(submitBody, opts) {
+  opts = opts || {};
+  var attempts = opts.attempts || 3;
+  var timeoutMs = opts.timeoutMs || 120000;
+  var lastErr = null;
+  var i;
+  for (i = 0; i < attempts; i++) {
+    if (i > 0) {
+      showLoading('연결이 끊겨 다시 보내는 중입니다… (' + (i + 1) + '/' + attempts + ')');
+      startLoadingCountdown('연결이 끊겨 다시 보내는 중입니다…', Math.max(45, Math.round(timeoutMs / 1000) - 30));
+      await new Promise(function (r) { setTimeout(r, 1200 * i); });
+    }
+    try {
+      var res = await withTimeoutMs(
+        fetch(GAS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(submitBody),
+        }),
+        timeoutMs,
+        '시트 기록이 너무 오래 걸립니다. 잠시 후 다시 시도해 주세요.'
+      );
+      var text = await res.text();
+      var json = null;
+      try { json = JSON.parse(text); } catch (parseErr) {
+        throw new Error('서버 응답을 읽지 못했습니다. 잠시 후 다시 시도해 주세요.');
+      }
+      return json;
+    } catch (err) {
+      lastErr = err;
+      if (!isRetryableSubmitError_(err) || i >= attempts - 1) throw err;
+    }
+  }
+  throw lastErr || new Error('제출 실패');
 }
 
 /** 완료 화면의 드라이브 링크 행만 갱신 (JPEG 백그라운드 저장 후) */
@@ -2675,21 +2724,16 @@ async function submitForm() {
   Object.keys(data).forEach(function (k) {
     if (k !== 'signature') submitBody[k] = data[k];
   });
+  // 같은 제출을 재시도해도 회차·스케줄이 두 번 쌓이지 않도록
+  submitBody.clientRequestId = newClientRequestId_();
+  submitBody.action = 'submitApplication';
 
   showLoading('시트에 기록하는 중입니다…');
-  startLoadingCountdown('시트에 기록하는 중입니다…', 10);
+  // UI 카운트다운을 실제 대기(최대 ~2분)에 맞춤 — 예전 10초면 0초에서 실패처럼 보였음
+  startLoadingCountdown('시트에 기록하는 중입니다…', 90);
 
   try {
-    var res = await withTimeoutMs(
-      fetch(GAS_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(submitBody),
-      }),
-      90000,
-      '시트 기록이 너무 오래 걸립니다. 잠시 후 다시 시도해 주세요.'
-    );
-    var json = await res.json();
+    var json = await postApplicationToGas_(submitBody, { attempts: 3, timeoutMs: 120000 });
     window._lastSubmitResult = json;
 
     if (json.result === 'success') {
@@ -2713,7 +2757,14 @@ async function submitForm() {
     }
   } catch (err) {
     hideLoading();
-    alert('제출 중 오류가 발생했습니다.\n' + err.message);
+    var msg = (err && err.message) ? err.message : String(err || '');
+    if (/Failed to fetch/i.test(msg)) {
+      msg =
+        '서버 연결이 끊겼습니다 (Failed to fetch).\n\n' +
+        '이미 회원정보에 등록됐을 수 있어요. 강사앱·회원정보 시트를 먼저 확인해 주세요.\n' +
+        '없으면 같은 내용으로 「완료」를 다시 눌러 주세요.';
+    }
+    alert('제출 중 오류가 발생했습니다.\n' + msg);
   }
 }
 
@@ -2946,22 +2997,29 @@ function stopLoadingCountdown() {
 }
 
 function startLoadingCountdown(label, seconds) {
-  stopLoadingCountdown();
-  var remain = Math.max(0, parseInt(seconds || 0, 10) || 0);
-  var title = String(label || '').trim();
-  var textEl = document.getElementById('loadingText');
-  var cdEl = document.getElementById('loadingCountdown');
-  if (cdEl) cdEl.hidden = false;
+ stopLoadingCountdown();
+ var remain = Math.max(0, parseInt(seconds || 0, 10) || 0);
+ var title = String(label || '').trim();
+ var textEl = document.getElementById('loadingText');
+ var cdEl = document.getElementById('loadingCountdown');
+ var overtime = 0;
+ if (cdEl) cdEl.hidden = false;
 
-  function tick() {
-    if (textEl) textEl.textContent = title ? (title + '...') : '처리 중...';
-    if (cdEl) cdEl.textContent = '남은 시간: ' + remain + '초';
-    if (remain <= 0) return;
-    remain -= 1;
-  }
+ function tick() {
+   if (textEl) textEl.textContent = title ? title : '처리 중...';
+   if (cdEl) {
+     if (remain > 0) {
+       cdEl.textContent = '예상 남은 시간: 약 ' + remain + '초';
+       remain -= 1;
+     } else {
+       overtime += 1;
+       cdEl.textContent = '예상보다 조금 더 걸리고 있어요… (' + overtime + '초) 창을 닫지 마세요';
+     }
+   }
+ }
 
-  tick();
-  _loadingCountdownTimer = setInterval(tick, 1000);
+ tick();
+ _loadingCountdownTimer = setInterval(tick, 1000);
 }
 
 // ══════════════════════════════════════════════════════
