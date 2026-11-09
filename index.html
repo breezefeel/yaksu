@@ -2597,41 +2597,175 @@ function newClientRequestId_() {
   return 'req_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
 }
 
-/** GAS 웹앱 POST — 네트워크 단절 시 최대 2회 재시도(서버 clientRequestId 중복 방지) */
-async function postApplicationToGas_(submitBody, opts) {
-  opts = opts || {};
-  var attempts = opts.attempts || 3;
-  var timeoutMs = opts.timeoutMs || 120000;
-  var lastErr = null;
-  var i;
-  for (i = 0; i < attempts; i++) {
-    if (i > 0) {
-      showLoading('연결이 끊겨 다시 보내는 중입니다… (' + (i + 1) + '/' + attempts + ')');
-      startLoadingCountdown('연결이 끊겨 다시 보내는 중입니다…', Math.max(45, Math.round(timeoutMs / 1000) - 30));
-      await new Promise(function (r) { setTimeout(r, 1200 * i); });
-    }
+var SUBMIT_ATTEMPT_STORE_KEY = 'yaksuSubmitAttemptV1';
+var _submitAttemptMemory = null;
+var _submitInFlight = false;
+
+function submitAttemptStorage_() {
+  try {
+    if (typeof sessionStorage !== 'undefined' && sessionStorage) return sessionStorage;
+  } catch (e) {}
+  return null;
+}
+
+function loadSubmitAttempt_() {
+  var store = submitAttemptStorage_();
+  if (store) {
     try {
-      var res = await withTimeoutMs(
-        fetch(GAS_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(submitBody),
-        }),
-        timeoutMs,
-        '시트 기록이 너무 오래 걸립니다. 잠시 후 다시 시도해 주세요.'
-      );
-      var text = await res.text();
-      var json = null;
-      try { json = JSON.parse(text); } catch (parseErr) {
-        throw new Error('서버 응답을 읽지 못했습니다. 잠시 후 다시 시도해 주세요.');
-      }
-      return json;
-    } catch (err) {
-      lastErr = err;
-      if (!isRetryableSubmitError_(err) || i >= attempts - 1) throw err;
+      var raw = store.getItem(SUBMIT_ATTEMPT_STORE_KEY);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch (e) {
+      return null;
     }
   }
-  throw lastErr || new Error('제출 실패');
+  return _submitAttemptMemory;
+}
+
+function saveSubmitAttempt_(attempt) {
+  _submitAttemptMemory = attempt;
+  var store = submitAttemptStorage_();
+  if (!store) return;
+  try { store.setItem(SUBMIT_ATTEMPT_STORE_KEY, JSON.stringify(attempt)); } catch (e) {}
+}
+
+function clearSubmitAttempt_() {
+  _submitAttemptMemory = null;
+  var store = submitAttemptStorage_();
+  if (!store) return;
+  try { store.removeItem(SUBMIT_ATTEMPT_STORE_KEY); } catch (e) {}
+}
+
+/** 같은 신청의 재시도 키. 서버는 이 키가 아니라 clientRequestId만으로 중복을 구분해야 한다. */
+function submissionDraftKey_(data) {
+  var slots = (data && data.scheduleSlots ? data.scheduleSlots : []).map(function (s) {
+    return { day: s && s.day, time: s && s.time };
+  });
+  return JSON.stringify({
+    name: String((data && data.name) || '').trim(),
+    phone: String((data && data.phone) || '').replace(/\D/g, ''),
+    program: (data && data.program) || '',
+    instructor: (data && data.instructor) || '',
+    startDate: (data && data.startDate) || '',
+    sessions: (data && data.sessions) || '',
+    amount: (data && data.amount) || '',
+    manualScheduleDates: !!(data && data.manualScheduleDates),
+    storeBranch: (data && data.storeBranch) || '',
+    branch: (data && data.branch) || '',
+    days: (data && data.days) || [],
+    scheduleSlots: slots,
+  });
+}
+
+function resolveClientRequestId_(draftKey) {
+  var prev = loadSubmitAttempt_();
+  if (prev && prev.draftKey === draftKey && prev.clientRequestId && prev.status !== 'success') {
+    prev.submitAttempt = (parseInt(prev.submitAttempt, 10) || 1) + 1;
+    prev.status = 'pending';
+    saveSubmitAttempt_(prev);
+    return prev.clientRequestId;
+  }
+  var created = {
+    draftKey: draftKey,
+    clientRequestId: newClientRequestId_(),
+    submitAttempt: 1,
+    status: 'pending',
+    savedAt: Date.now(),
+  };
+  saveSubmitAttempt_(created);
+  return created.clientRequestId;
+}
+
+/** 스케줄만 저장된 뒤의 실패를 포함해, 전체 신청을 자동으로 다시 보내지 않는다. */
+function shouldAutoResubmitSubmit_() {
+  return false;
+}
+
+function classifySubmitFailure_(json, err) {
+  if (json && (json.result === 'partial' || json.partial === true)) return 'partial';
+  if (json && json.result === 'success') return 'success';
+  var msg = '';
+  if (json && json.message) msg = String(json.message);
+  else if (err && err.message) msg = String(err.message);
+  else msg = String(err || '');
+  if (json && json.result && json.result !== 'success') return 'business';
+  if (/서버 응답을 읽지 못했습니다|응답 형식/.test(msg)) return 'connection';
+  if (isRetryableSubmitError_(err) || isRetryableSubmitError_(msg)) return 'connection';
+  if (/시트가 이미 있습니다|protected|보호된|권한이 없|편집할 수 없/i.test(msg)) return 'business';
+  if (!msg) return 'connection';
+  return 'business';
+}
+
+function submitFailureGuidance_(kind, detail) {
+  var reason = detail ? String(detail).trim() : '';
+  var sameRequest =
+    '자동으로 다시 보내지 않았습니다.\n' +
+    '스케줄표와 회원정보 시트를 먼저 확인하세요.\n' +
+    '같은 내용을 유지한 채 「완료」를 다시 누르면 같은 신청 번호로만 다시 요청합니다.\n' +
+    '이름, 연락처, 횟수, 금액, 시작일, 요일을 바꾸면 새 신청이 됩니다. 이름과 연락처만으로 다른 신청을 막지는 않습니다.';
+  if (kind === 'partial') {
+    return '스케줄은 저장됐지만 회원정보는 저장되지 않았습니다.\n' +
+      (reason ? reason + '\n\n' : '') +
+      '연결이 끊긴 것이 아닙니다.\n' + sameRequest;
+  }
+  if (kind === 'connection') {
+    return '서버 응답을 확인하지 못했습니다. 연결 문제이거나, 저장 도중 응답만 유실된 경우입니다.\n' +
+      (reason ? reason + '\n\n' : '') +
+      '스케줄만 저장되고 회원정보가 빠졌을 수 있습니다.\n' + sameRequest;
+  }
+  var sheetNote = /시트가 이미 있습니다/.test(reason)
+    ? '이 메시지는 월별 스케줄 탭을 만들다 이미 있는 탭과 겹친 경우입니다. 회원정보 시트 보호는 해제하지 마세요.\n'
+    : '';
+  return '신청이 서버에서 처리되지 않았습니다. 연결이 끊긴 것이 아닙니다.\n' +
+    (reason ? '원인: ' + reason + '\n\n' : '') +
+    sheetNote +
+    sameRequest;
+}
+
+/**
+ * 신청 본문은 길어서 GET 쿼리로 보내지 않는다.
+ * 강사앱의 작은 조회만 GET을 쓰고, 신청 저장은 POST 한 번만 보낸다.
+ */
+async function postApplicationToGas_(submitBody) {
+  var timeoutMs = 120000;
+  var res = await withTimeoutMs(
+    fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(submitBody),
+    }),
+    timeoutMs,
+    '시트 기록이 너무 오래 걸립니다. 잠시 후 다시 시도해 주세요.'
+  );
+  var text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch (parseErr) {
+    throw new Error('서버 응답을 읽지 못했습니다. 시트에 일부만 저장됐을 수 있습니다.');
+  }
+}
+
+async function probeSubmitStatus_(clientRequestId) {
+  if (!clientRequestId) return null;
+  try {
+    var body = JSON.stringify({
+      action: 'submitApplicationStatus',
+      clientRequestId: clientRequestId,
+    });
+    var res = await withTimeoutMs(
+      fetch(GAS_URL + (GAS_URL.indexOf('?') >= 0 ? '&' : '?') + 'data=' + encodeURIComponent(body), {
+        method: 'GET',
+      }),
+      15000,
+      '저장 결과 확인 시간이 초과되었습니다.'
+    );
+    var json = JSON.parse(await res.text());
+    if (json && /unknown action/i.test(String(json.message || ''))) return null;
+    return json;
+  } catch (e) {
+    return null;
+  }
 }
 
 /** 완료 화면의 드라이브 링크 행만 갱신 (JPEG 백그라운드 저장 후) */
@@ -2707,64 +2841,85 @@ function runPostSubmitBackground_(data) {
   })();
 }
 
-async function submitForm() {
-  await fetchScheduleBusyBounded(2200);
-  if (!validatePage2()) return;
-
-  window._holidaySet = new Set();
-  const data = collectData();
-
-  const dayCheck = validateSessionsMatchManageDays(data.days, data.sessions, data.scheduleSlots);
-  if (!dayCheck.ok) {
-    alert(dayCheck.message);
-    return;
+function finishSuccessfulSubmit_(data, json) {
+  clearSubmitAttempt_();
+  window._lastSubmitResult = json;
+  if (json.skipConfirmAlimtalkSuggest && !data.skipConfirmAlimtalk) {
+    data.skipConfirmAlimtalk = true;
+    data.skipConfirmAlimtalkAuto = true;
+    var skipCb = document.getElementById('skipConfirmAlimtalk');
+    if (skipCb) skipCb.checked = true;
   }
+  window._submittedData = data;
+  window._lastDriveSave = {};
+  window._lastDriveSaveError = '';
+  hideLoading();
+  showSuccess(data);
+  runPostSubmitBackground_(data);
+}
 
-  var submitBody = {};
-  Object.keys(data).forEach(function (k) {
-    if (k !== 'signature') submitBody[k] = data[k];
-  });
-  // 같은 제출을 재시도해도 회차·스케줄이 두 번 쌓이지 않도록
-  submitBody.clientRequestId = newClientRequestId_();
-  submitBody.action = 'submitApplication';
-
-  showLoading('시트에 기록하는 중입니다…');
-  // UI 카운트다운을 실제 대기(최대 ~2분)에 맞춤 — 예전 10초면 0초에서 실패처럼 보였음
-  startLoadingCountdown('시트에 기록하는 중입니다…', 90);
-
+async function submitForm() {
+  if (_submitInFlight) return;
+  _submitInFlight = true;
   try {
-    var json = await postApplicationToGas_(submitBody, { attempts: 3, timeoutMs: 120000 });
-    window._lastSubmitResult = json;
+    await fetchScheduleBusyBounded(2200);
+    if (!validatePage2()) return;
 
-    if (json.result === 'success') {
-      if (json.skipConfirmAlimtalkSuggest && !data.skipConfirmAlimtalk) {
-        data.skipConfirmAlimtalk = true;
-        data.skipConfirmAlimtalkAuto = true;
-        var skipCb = document.getElementById('skipConfirmAlimtalk');
-        if (skipCb) skipCb.checked = true;
+    window._holidaySet = new Set();
+    const data = collectData();
+
+    const dayCheck = validateSessionsMatchManageDays(data.days, data.sessions, data.scheduleSlots);
+    if (!dayCheck.ok) {
+      alert(dayCheck.message);
+      return;
+    }
+
+    var submitBody = {};
+    Object.keys(data).forEach(function (k) {
+      if (k !== 'signature') submitBody[k] = data[k];
+    });
+    var draftKey = submissionDraftKey_(submitBody);
+    submitBody.clientRequestId = resolveClientRequestId_(draftKey);
+    var attemptState = loadSubmitAttempt_();
+    submitBody.submitAttempt = attemptState && attemptState.submitAttempt ? attemptState.submitAttempt : 1;
+    submitBody.action = 'submitApplication';
+
+    showLoading('시트에 기록하는 중입니다…');
+    startLoadingCountdown('시트에 기록하는 중입니다…', 90);
+
+    var json = null;
+    try {
+      json = await postApplicationToGas_(submitBody);
+    } catch (err) {
+      var kind = classifySubmitFailure_(null, err);
+      var detail = (err && err.message) ? err.message : String(err || '');
+      if (kind === 'connection') {
+        showLoading('저장 결과를 확인하는 중입니다…');
+        var status = await probeSubmitStatus_(submitBody.clientRequestId);
+        if (status && status.result === 'success') {
+          finishSuccessfulSubmit_(data, status);
+          return;
+        }
+        if (status && (status.result === 'partial' || status.partial === true)) {
+          hideLoading();
+          alert('제출 중 오류가 발생했습니다.\n' + submitFailureGuidance_('partial', status.message || detail));
+          return;
+        }
       }
-      window._submittedData = data;
-      window._lastDriveSave = {};
-      window._lastDriveSaveError = '';
-
-      // html2canvas·드라이브 업로드가 길어지면 화면이 멈춘 것처럼 보이므로, 먼저 완료 화면으로 전환
       hideLoading();
-      showSuccess(data);
+      alert('제출 중 오류가 발생했습니다.\n' + submitFailureGuidance_(kind, detail));
+      return;
+    }
 
-      runPostSubmitBackground_(data);
-    } else {
-      throw new Error(json.message || '서버 오류');
+    if (json && json.result === 'success') {
+      finishSuccessfulSubmit_(data, json);
+      return;
     }
-  } catch (err) {
     hideLoading();
-    var msg = (err && err.message) ? err.message : String(err || '');
-    if (/Failed to fetch/i.test(msg)) {
-      msg =
-        '서버 연결이 끊겼습니다 (Failed to fetch).\n\n' +
-        '이미 회원정보에 등록됐을 수 있어요. 강사앱·회원정보 시트를 먼저 확인해 주세요.\n' +
-        '없으면 같은 내용으로 「완료」를 다시 눌러 주세요.';
-    }
-    alert('제출 중 오류가 발생했습니다.\n' + msg);
+    var failKind = classifySubmitFailure_(json, null);
+    alert('제출 중 오류가 발생했습니다.\n' + submitFailureGuidance_(failKind, (json && json.message) || '서버 오류'));
+  } finally {
+    _submitInFlight = false;
   }
 }
 
