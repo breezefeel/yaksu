@@ -2705,8 +2705,7 @@ function submitFailureGuidance_(kind, detail) {
     '같은 내용을 유지한 채 「완료」를 다시 누르면 같은 신청 번호로만 다시 요청합니다.\n' +
     '이름, 연락처, 횟수, 금액, 시작일, 요일을 바꾸면 새 신청이 됩니다. 이름과 연락처만으로 다른 신청을 막지는 않습니다.';
   if (kind === 'partial') {
-    return '스케줄은 저장됐지만 회원정보는 저장되지 않았습니다.\n' +
-      (reason ? reason + '\n\n' : '') +
+    return (reason || '회원정보까지는 저장되지 않았습니다. 스케줄은 일부만 반영됐을 수 있습니다.') + '\n\n' +
       '연결이 끊긴 것이 아닙니다.\n' + sameRequest;
   }
   if (kind === 'connection') {
