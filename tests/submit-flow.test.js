@@ -217,7 +217,7 @@ test('응답 유실과 시간 초과는 연결 오류로 구분한다', function
 });
 
 test('스케줄만 저장된 응답은 부분 저장으로 구분한다', function () {
-  const json = { result: 'partial', scheduleSaved: true, memberSaved: false, message: '회원정보 기록 실패' };
+  const json = { result: 'partial', scheduleSaved: true, memberSaved: false, message: '스케줄은 저장됐고 회원정보는 저장되지 않았습니다. 회원정보 기록 실패' };
   assert.strictEqual(api.classifySubmitFailure_(json, null), 'partial');
   const guidance = api.submitFailureGuidance_('partial', json.message);
   assert.match(guidance, /회원정보는 저장되지 않았습니다/);
