@@ -1217,7 +1217,7 @@ const TIME_SLOTS = [
   '12:00','12:30','13:00','13:30',
   '14:00','14:30','15:00','15:30',
   '16:00','16:30','17:00','17:30','18:00','18:30',
-  '19:00','19:30','20:00','20:30','21:00'
+  '19:00','19:30','20:00','20:30','21:00','21:30','22:00'
 ];
 
 const TIME_HOUR_OPTIONS = [
@@ -1226,6 +1226,7 @@ const TIME_HOUR_OPTIONS = [
   { v: '13', l: '오후 1시' }, { v: '14', l: '오후 2시' }, { v: '15', l: '오후 3시' },
   { v: '16', l: '오후 4시' }, { v: '17', l: '오후 5시' }, { v: '18', l: '오후 6시' },
   { v: '19', l: '오후 7시' }, { v: '20', l: '오후 8시' }, { v: '21', l: '오후 9시' },
+  { v: '22', l: '오후 10시' },
 ];
 
 const DAYS_ORDER = ['월','화','수','목','금','토'];
@@ -2121,6 +2122,16 @@ function appendHourMinuteSelects(row, slotId, prev) {
     '<option value="00"' + (prev.minute === '00' || !prev.minute ? ' selected' : '') + '>00분</option>' +
     '<option value="30"' + (prev.minute === '30' ? ' selected' : '') + '>30분</option>';
   row.appendChild(minSel);
+
+  // 마지막 타임은 22:00 — 오후 10시는 00분만 선택 가능 (22:30 은 시트에 행이 없음)
+  function syncLastHourMinute() {
+    const last = hourSel.value === '22';
+    const opt30 = minSel.querySelector('option[value="30"]');
+    if (opt30) opt30.disabled = last;
+    if (last && minSel.value === '30') minSel.value = '00';
+  }
+  hourSel.addEventListener('change', syncLastHourMinute);
+  syncLastHourMinute();
 }
 
 function appendPrimaryTimeRow(wrap, day, prev) {
