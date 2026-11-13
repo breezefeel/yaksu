@@ -95,7 +95,7 @@ const api = new Function(
     extractFunction(html, 'submitFailureGuidance_'),
     'return {',
     '  formatDateForDB, computeSessionSlotsFromPattern, loadSubmitAttempt_,',
-    '  clearSubmitAttempt_, submissionDraftKey_, resolveClientRequestId_,',
+    '  saveSubmitAttempt_, clearSubmitAttempt_, submissionDraftKey_, resolveClientRequestId_,',
     '  shouldAutoResubmitSubmit_, classifySubmitFailure_, submitFailureGuidance_,',
     '};',
   ].join('\n')
@@ -137,6 +137,7 @@ function inferredMonthTabName(date) {
 let passed = 0;
 function test(name, fn) {
   memory.clear();
+  api.clearSubmitAttempt_();
   fn();
   passed += 1;
   console.log('ok', name);
@@ -159,6 +160,20 @@ test('같은 신청의 연속 재시도는 같은 번호를 유지한다', funct
   const second = api.resolveClientRequestId_(key);
   assert.strictEqual(first, second);
   assert.strictEqual(api.loadSubmitAttempt_().submitAttempt, 2);
+});
+
+test('저장소에 본문이 없어도 같은 탭의 신청 내용은 다시 보낸다', function () {
+  const key = api.submissionDraftKey_(draft());
+  const id = api.resolveClientRequestId_(key);
+  const stored = api.loadSubmitAttempt_();
+  stored.payload = { clientRequestId: id, name: '가상회원', sessions: '3개월 패키지' };
+  api.saveSubmitAttempt_(stored);
+  const stale = JSON.parse(sessionStorage.getItem('yaksuSubmitAttemptV1'));
+  delete stale.payload;
+  sessionStorage.setItem('yaksuSubmitAttemptV1', JSON.stringify(stale));
+  const loaded = api.loadSubmitAttempt_();
+  assert.strictEqual(loaded.clientRequestId, id);
+  assert.strictEqual(loaded.payload.name, '가상회원');
 });
 
 test('저장된 신청 번호는 시간 경과만으로 버리지 않는다', function () {
@@ -203,6 +218,9 @@ test('시트 이름 충돌은 업무 오류로 구분한다', function () {
   assert.match(guidance, /연결이 끊긴 것이 아닙니다/);
   assert.match(guidance, /보호는 해제하지 마세요/);
   assert.match(guidance, /자동으로 다시 보내지 않았습니다/);
+  assert.match(guidance, /같은 신청 다시 보내기/);
+  assert.match(guidance, /이미 반영된 회차/);
+  assert.doesNotMatch(guidance, /같은 내용을 유지한 채/);
   assert.doesNotMatch(guidance, /연결이 끊겨 다시 보내는/);
 });
 
@@ -278,6 +296,21 @@ test('신청 POST 경로는 자동 재시도 문구를 포함하지 않는다', 
   const probe = extractFunction(html, 'probeSubmitStatus_');
   assert.match(probe, /method:\s*'GET'/);
   assert.match(probe, /submitApplicationStatus/);
+});
+
+test('실패 안내의 다시 보내기는 저장된 신청 번호만 다시 쓴다', function () {
+  const guidance = api.submitFailureGuidance_('business', '스프레드시트 서비스에 오류가 발생했습니다.');
+  assert.match(guidance, /같은 신청 다시 보내기/);
+  assert.match(guidance, /이미 늘어난 회차/);
+  assert.doesNotMatch(guidance, /같은 내용을 유지한 채/);
+  const retry = extractFunction(html, 'retrySameSubmit_');
+  assert.match(retry, /body\.clientRequestId = attempt\.clientRequestId/);
+  assert.match(retry, /attempt\.payload/);
+  assert.doesNotMatch(retry, /newClientRequestId_/);
+  const send = extractFunction(html, 'sendSubmitBody_');
+  assert.match(send, /showSubmitFailure_/);
+  assert.doesNotMatch(send, /alert\(/);
+  assert.match(html, /같은 신청 다시 보내기/);
 });
 
 console.log(passed + ' tests passed');
