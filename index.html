@@ -760,6 +760,64 @@ body {
 @keyframes spin { to { transform: rotate(360deg); } }
 .loading-text { font-size: 15px; color: var(--muted); font-weight: 500; }
 
+.submit-failure {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.72);
+  display: none; align-items: center; justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+}
+.submit-failure.active { display: flex; }
+.submit-failure-box {
+  background: var(--white);
+  border-radius: 20px;
+  padding: 28px 24px 22px;
+  max-width: 420px;
+  width: 100%;
+  text-align: left;
+  box-shadow: 0 16px 40px rgba(0,0,0,.2);
+}
+.submit-failure-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+.submit-failure-body {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text);
+  white-space: pre-wrap;
+  margin-bottom: 18px;
+  max-height: 46vh;
+  overflow: auto;
+}
+.submit-failure-actions { display: flex; flex-direction: column; gap: 8px; }
+.submit-failure-retry {
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  color: #1a1a1a;
+  background: #f6e27a;
+}
+.submit-failure-close {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  background: var(--border);
+  color: var(--muted);
+}
+
 /* ── 완료 화면 ──────────────────────── */
 .success-card {
   background: var(--white);
@@ -1190,6 +1248,17 @@ body {
     </div>
     <div class="summary-box" id="summaryBox"></div>
     <button class="btn-drive" id="returnBtn" onclick="returnToStartNow()">처음으로 돌아가기 (30초)</button>
+  </div>
+</div>
+
+<div class="submit-failure" id="submitFailure" role="dialog" aria-modal="true" aria-labelledby="submitFailureTitle">
+  <div class="submit-failure-box">
+    <div class="submit-failure-title" id="submitFailureTitle">제출 중 오류가 발생했습니다</div>
+    <div class="submit-failure-body" id="submitFailureBody"></div>
+    <div class="submit-failure-actions">
+      <button type="button" class="submit-failure-retry" id="submitFailureRetry" onclick="retrySameSubmit_()">같은 신청 다시 보내기</button>
+      <button type="button" class="submit-failure-close" onclick="hideSubmitFailure_()">닫기</button>
+    </div>
   </div>
 </div>
 
@@ -2620,18 +2689,26 @@ function submitAttemptStorage_() {
 }
 
 function loadSubmitAttempt_() {
+  var fromStore = null;
   var store = submitAttemptStorage_();
   if (store) {
     try {
       var raw = store.getItem(SUBMIT_ATTEMPT_STORE_KEY);
-      if (!raw) return null;
-      var parsed = JSON.parse(raw);
-      return parsed && typeof parsed === 'object' ? parsed : null;
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') fromStore = parsed;
+      }
     } catch (e) {
-      return null;
+      fromStore = null;
     }
   }
-  return _submitAttemptMemory;
+  var memory = _submitAttemptMemory;
+  if (memory && memory.payload && memory.clientRequestId) {
+    if (!fromStore || !fromStore.payload || fromStore.clientRequestId === memory.clientRequestId) {
+      return memory;
+    }
+  }
+  return fromStore || memory;
 }
 
 function saveSubmitAttempt_(attempt) {
@@ -2713,16 +2790,17 @@ function submitFailureGuidance_(kind, detail) {
   var sameRequest =
     '자동으로 다시 보내지 않았습니다.\n' +
     '스케줄표와 회원정보 시트를 먼저 확인하세요.\n' +
-    '같은 내용을 유지한 채 「완료」를 다시 누르면 같은 신청 번호로만 다시 요청합니다.\n' +
-    '이름, 연락처, 횟수, 금액, 시작일, 요일을 바꾸면 새 신청이 됩니다. 이름과 연락처만으로 다른 신청을 막지는 않습니다.';
+    '일부만 저장됐을 수 있습니다. 결제 회차만 늘어나고 금액·결제 방법·관리요일·다음 일정은 비어 있을 수 있습니다.\n' +
+    '「같은 신청 다시 보내기」만 사용하세요. 방금 그 신청 번호와 내용으로 다시 보내며, 서버는 이미 반영된 회차를 다시 더하지 않고 빠뜨린 칸만 이어서 채웁니다.\n' +
+    '이름, 연락처, 횟수, 금액, 시작일, 요일을 바꾼 뒤 「완료」를 누르면 새 신청이 됩니다. 그러면 이미 늘어난 회차에 한 번 더 더해질 수 있습니다. 이름과 연락처만으로 다른 신청을 막지는 않습니다.';
   if (kind === 'partial') {
-    return (reason || '회원정보까지는 저장되지 않았습니다. 스케줄은 일부만 반영됐을 수 있습니다.') + '\n\n' +
+    return (reason || '회원정보는 저장되지 않았습니다. 스케줄은 일부만 반영됐을 수 있습니다.') + '\n\n' +
       '연결이 끊긴 것이 아닙니다.\n' + sameRequest;
   }
   if (kind === 'connection') {
     return '서버 응답을 확인하지 못했습니다. 연결 문제이거나, 저장 도중 응답만 유실된 경우입니다.\n' +
       (reason ? reason + '\n\n' : '') +
-      '스케줄만 저장되고 회원정보가 빠졌을 수 있습니다.\n' + sameRequest;
+      '스케줄만 저장되고 회원정보가 빠졌을 수 있습니다. 반대로 회원 칸만 일부 적히고 스케줄이 빠졌을 수도 있습니다.\n' + sameRequest;
   }
   var sheetNote = /시트가 이미 있습니다/.test(reason)
     ? '이 메시지는 월별 스케줄 탭을 만들다 이미 있는 탭과 겹친 경우입니다. 회원정보 시트 보호는 해제하지 마세요.\n'
@@ -2731,6 +2809,21 @@ function submitFailureGuidance_(kind, detail) {
     (reason ? '원인: ' + reason + '\n\n' : '') +
     sheetNote +
     sameRequest;
+}
+
+function hideSubmitFailure_() {
+  var el = document.getElementById('submitFailure');
+  if (el) el.classList.remove('active');
+}
+
+function showSubmitFailure_(kind, detail) {
+  hideLoading();
+  var body = document.getElementById('submitFailureBody');
+  var panel = document.getElementById('submitFailure');
+  var text = '제출 중 오류가 발생했습니다.\n' + submitFailureGuidance_(kind, detail);
+  if (body) body.textContent = text;
+  if (panel) panel.classList.add('active');
+  else alert(text);
 }
 
 /**
@@ -2851,7 +2944,17 @@ function runPostSubmitBackground_(data) {
   })();
 }
 
+function rememberSubmitPayload_(submitBody) {
+  var attempt = loadSubmitAttempt_();
+  if (!attempt || !submitBody) return;
+  attempt.payload = submitBody;
+  attempt.status = 'pending';
+  attempt.clientRequestId = submitBody.clientRequestId || attempt.clientRequestId;
+  saveSubmitAttempt_(attempt);
+}
+
 function finishSuccessfulSubmit_(data, json) {
+  hideSubmitFailure_();
   clearSubmitAttempt_();
   window._lastSubmitResult = json;
   if (json.skipConfirmAlimtalkSuggest && !data.skipConfirmAlimtalk) {
@@ -2866,6 +2969,64 @@ function finishSuccessfulSubmit_(data, json) {
   hideLoading();
   showSuccess(data);
   runPostSubmitBackground_(data);
+}
+
+async function sendSubmitBody_(submitBody) {
+  hideSubmitFailure_();
+  showLoading('시트에 기록하는 중입니다…');
+  startLoadingCountdown('시트에 기록하는 중입니다…', 90);
+
+  var json = null;
+  try {
+    json = await postApplicationToGas_(submitBody);
+  } catch (err) {
+    var kind = classifySubmitFailure_(null, err);
+    var detail = (err && err.message) ? err.message : String(err || '');
+    if (kind === 'connection') {
+      showLoading('저장 결과를 확인하는 중입니다…');
+      var status = await probeSubmitStatus_(submitBody.clientRequestId);
+      if (status && status.result === 'success') {
+        finishSuccessfulSubmit_(submitBody, status);
+        return;
+      }
+      if (status && (status.result === 'partial' || status.partial === true)) {
+        showSubmitFailure_('partial', status.message || detail);
+        return;
+      }
+    }
+    showSubmitFailure_(kind, detail);
+    return;
+  }
+
+  if (json && json.result === 'success') {
+    finishSuccessfulSubmit_(submitBody, json);
+    return;
+  }
+  var failKind = classifySubmitFailure_(json, null);
+  showSubmitFailure_(failKind, (json && json.message) || '서버 오류');
+}
+
+async function retrySameSubmit_() {
+  if (_submitInFlight) return;
+  var attempt = loadSubmitAttempt_();
+  if (!attempt || !attempt.clientRequestId || !attempt.payload) {
+    showSubmitFailure_('business', '다시 보낼 신청 내용을 찾지 못했습니다. 화면을 닫고 내용을 확인한 뒤, 값을 바꾸지 말고 같은 신청으로만 다시 보내 주세요.');
+    return;
+  }
+  _submitInFlight = true;
+  try {
+    var body = JSON.parse(JSON.stringify(attempt.payload));
+    body.clientRequestId = attempt.clientRequestId;
+    body.action = 'submitApplication';
+    body.submitAttempt = (parseInt(attempt.submitAttempt, 10) || 1) + 1;
+    attempt.submitAttempt = body.submitAttempt;
+    attempt.payload = body;
+    attempt.status = 'pending';
+    saveSubmitAttempt_(attempt);
+    await sendSubmitBody_(body);
+  } finally {
+    _submitInFlight = false;
+  }
 }
 
 async function submitForm() {
@@ -2893,41 +3054,8 @@ async function submitForm() {
     var attemptState = loadSubmitAttempt_();
     submitBody.submitAttempt = attemptState && attemptState.submitAttempt ? attemptState.submitAttempt : 1;
     submitBody.action = 'submitApplication';
-
-    showLoading('시트에 기록하는 중입니다…');
-    startLoadingCountdown('시트에 기록하는 중입니다…', 90);
-
-    var json = null;
-    try {
-      json = await postApplicationToGas_(submitBody);
-    } catch (err) {
-      var kind = classifySubmitFailure_(null, err);
-      var detail = (err && err.message) ? err.message : String(err || '');
-      if (kind === 'connection') {
-        showLoading('저장 결과를 확인하는 중입니다…');
-        var status = await probeSubmitStatus_(submitBody.clientRequestId);
-        if (status && status.result === 'success') {
-          finishSuccessfulSubmit_(data, status);
-          return;
-        }
-        if (status && (status.result === 'partial' || status.partial === true)) {
-          hideLoading();
-          alert('제출 중 오류가 발생했습니다.\n' + submitFailureGuidance_('partial', status.message || detail));
-          return;
-        }
-      }
-      hideLoading();
-      alert('제출 중 오류가 발생했습니다.\n' + submitFailureGuidance_(kind, detail));
-      return;
-    }
-
-    if (json && json.result === 'success') {
-      finishSuccessfulSubmit_(data, json);
-      return;
-    }
-    hideLoading();
-    var failKind = classifySubmitFailure_(json, null);
-    alert('제출 중 오류가 발생했습니다.\n' + submitFailureGuidance_(failKind, (json && json.message) || '서버 오류'));
+    rememberSubmitPayload_(submitBody);
+    await sendSubmitBody_(submitBody);
   } finally {
     _submitInFlight = false;
   }
